@@ -1,0 +1,2236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orçamento de Campo</title>
+<meta name="author" content="Wendel Emílio de Souza Matias — oficial.respostas@gmail.com">
+<meta name="theme-color" content="#0a0a0c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+/* Identidade Guardião (guardiaoseg.com.br): preto, dourado e vermelho, tema escuro único.
+   Layout: app de campo para celular — cabeçalho preto, etapas numeradas, barra fixa de ação embaixo; painel do gestor com indicadores */
+:root{
+  --bg:#0a0a0c; --surface:#141416; --surface-2:#1c1c1f; --ink:#eae7e0; --muted:#9a9aa1; --line:#2a2a2e;
+  --navy:#0a0a0c; --navy-ink:#eae7e0; --accent:#d4af37; --accent-deep:#b8941f; --accent-ink:#0a0a0c; --red:#c81e1e;
+  --ok:#3fbf76; --warn:#f08c2e; --bad:#ef5350; --info:#5aa8ea; --neg:#b08ae6;
+  --display:"Big Shoulders Display","Arial Narrow",Arial,sans-serif;
+  --body:"Work Sans","Segoe UI",Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono",Consolas,monospace;
+  --r:10px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 var(--body);padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--display);letter-spacing:.01em;margin:0;text-wrap:balance}
+.wrap{max-width:920px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+.top{background:var(--navy);color:var(--navy-ink);padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:12px;padding-block:12px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;flex:1;min-width:0}
+.brand h1{font-size:1.6rem;line-height:1.05;text-transform:uppercase;letter-spacing:.04em}
+.brand h1 em{font-style:normal;color:var(--accent)}
+.brand small{opacity:.75;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbtns{display:flex;gap:8px;flex-wrap:wrap}
+.tbtn{background:transparent;border:1px solid color-mix(in srgb,var(--navy-ink) 35%,transparent);color:var(--navy-ink);border-radius:8px;padding:7px 12px;font-size:.9rem;cursor:pointer}
+.tbtn:hover{background:color-mix(in srgb,var(--navy-ink) 12%,transparent)}
+.tbtn.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.stripe{height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+
+.steps{display:flex;gap:6px;overflow-x:auto;padding-block:14px 6px;scrollbar-width:none}
+.steps::-webkit-scrollbar{display:none}
+.step{flex:1 0 auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px 6px 6px;cursor:pointer;font-size:.88rem;color:var(--muted);white-space:nowrap}
+.step b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--surface-2);font-family:var(--display);font-size:.95rem;color:var(--ink)}
+.step.on{border-color:var(--accent);color:var(--ink);font-weight:600}
+.step.on b{background:var(--accent);color:var(--accent-ink)}
+
+main{padding-block:14px 24px;display:flex;flex-direction:column;gap:16px}
+.head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.head h2{font-size:1.9rem;text-transform:uppercase;letter-spacing:.03em}
+.head p{margin:2px 0 0;color:var(--muted);font-size:.92rem}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h3,.cat > h3{font-size:1.15rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.panel > p,.nota{margin:0;color:var(--muted);font-size:.92rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.grid.g3{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.grid .full{grid-column:1/-1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;min-width:0}
+input[type=text],input[type=email],input[type=tel],input[type=date],input[type=datetime-local],input[type=month],input[type=number],input[type=password],input[type=search],select,textarea{
+  width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 11px;font-size:1rem;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink)}
+textarea{min-height:84px;resize:vertical}
+textarea.code{font-family:var(--mono);font-size:.78rem;min-height:260px;white-space:pre}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:10px 16px;font-weight:600;cursor:pointer;font-size:.95rem;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.navy{background:transparent;border-color:var(--accent);color:var(--accent)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:6px 10px;font-size:.85rem}
+.btn[disabled]{opacity:.5;cursor:wait}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.cat{display:flex;flex-direction:column;gap:8px}
+.cat > h3{margin-top:4px}
+.item{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);min-width:0}
+.item.sel{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+.item .ih{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer}
+.item .ih input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.item .nm{flex:1;min-width:0}
+.item .nm b{display:block;font-weight:600}
+.item .nm span{font-size:.82rem;color:var(--muted)}
+.item .lt{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.item .ib{display:grid;grid-template-columns:90px 1fr;gap:10px;padding:0 14px 14px}
+.item .ib .full{grid-column:1/-1}
+@media (min-width:600px){.item .ib{grid-template-columns:110px 160px 1fr}.item .ib .full{grid-column:auto}.item .ib .wide{grid-column:1/-1}}
+.tag{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+
+.est{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.est .en{font-weight:600}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{flex:1 1 auto;border:0;background:var(--surface-2);padding:8px 10px;font-size:.86rem;cursor:pointer;color:var(--muted);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on.bom{background:var(--ok);color:#fff}
+.seg button.on.reparo{background:var(--warn);color:#fff}
+.seg button.on.nao{background:var(--bad);color:#fff}
+.est .ex{display:grid;grid-template-columns:90px 1fr;gap:10px}
+
+.fotos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.foto{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--surface);display:flex;flex-direction:column}
+.foto img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--surface-2)}
+.foto .ph{width:100%;aspect-ratio:4/3;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-size:.85rem;text-align:center;padding:8px}
+.foto .fb{padding:10px;display:flex;flex-direction:column;gap:8px}
+.add{border:2px dashed var(--line);border-radius:var(--r);display:grid;place-items:center;min-height:180px;cursor:pointer;color:var(--muted);text-align:center;padding:16px;background:var(--surface)}
+.add:hover{border-color:var(--accent);color:var(--ink)}
+.add strong{font-family:var(--display);font-size:1.3rem;display:block;color:var(--ink)}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tot td{border-top:2px solid var(--ink);font-weight:600}
+.totals{display:flex;flex-direction:column;gap:4px;margin-left:auto;min-width:min(100%,300px)}
+.totals div{display:flex;justify-content:space-between;gap:16px;font-variant-numeric:tabular-nums}
+.totals .big{border-top:2px solid var(--ink);padding-top:8px;margin-top:4px;font-family:var(--display);font-size:1.5rem}
+
+.lev{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--surface);border-left:5px solid var(--line)}
+.lev.s-visitar{border-left-color:var(--info)} .lev.s-enviado{border-left-color:var(--warn)} .lev.s-negociacao{border-left-color:var(--neg)}
+.lev.s-fechado{border-left-color:var(--ok)} .lev.s-perdido{border-left-color:var(--bad)} .lev.s-rep{border-left-color:var(--accent)}
+.lev .lt1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.lev .lt1 b{font-family:var(--display);font-size:1.35rem;letter-spacing:.02em;min-width:0}
+.num{font-family:var(--mono);font-size:.82em}
+.lev .meta{color:var(--muted);font-size:.86rem}
+.lev .info{font-size:.92rem;font-variant-numeric:tabular-nums}
+.lev details{font-size:.85rem;color:var(--muted)}
+.lev details ul{margin:6px 0 0;padding-left:18px}
+.pill{display:inline-block;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.p-visitar{background:color-mix(in srgb,var(--info) 15%,transparent);color:var(--info)}
+.p-levantamento{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.p-enviado{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.p-negociacao{background:color-mix(in srgb,var(--neg) 15%,transparent);color:var(--neg)}
+.p-fechado{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.p-perdido{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.alerta{color:var(--bad);font-weight:600}
+.atencao{color:var(--warn);font-weight:600}
+.bom{color:var(--ok);font-weight:600}
+.nuvem{display:inline-flex;align-items:center;gap:6px}
+.nuvem i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.nuvem.ok i{background:var(--ok)} .nuvem.pend i{background:var(--accent)} .nuvem.off i{background:var(--warn)} .nuvem.erro i{background:var(--bad)}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile:hover{border-color:var(--muted)}
+div.tile{cursor:default}
+.tile small{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.tile b{font-family:var(--display);font-size:2.3rem;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--accent);overflow-wrap:anywhere}
+.tile span{font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.tile.t-info b{color:var(--info)} .tile.t-warn b{color:var(--warn)} .tile.t-bad b{color:var(--bad)} .tile.t-ok b{color:var(--ok)}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;flex-wrap:nowrap}
+.chips.wrapl{flex-wrap:wrap;overflow:visible}
+.chips::-webkit-scrollbar{display:none}
+.chipb{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.86rem;cursor:pointer;color:var(--muted)}
+.chipb.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.chipb.pac{border-color:var(--accent-deep);color:var(--ink)}
+
+/* Calculadora, assinatura, metas e gráfico */
+.calc td,.calc th{padding:6px 4px}
+.calc .preco{font-family:var(--display);font-size:1.8rem;color:var(--accent)}
+.sig{width:100%;height:auto;aspect-ratio:3/1;background:#fff;border-radius:8px;border:2px dashed var(--accent-deep);touch-action:none;cursor:crosshair;display:block}
+.sigimg{background:#fff;border-radius:8px;max-width:100%;max-height:150px;display:block}
+.prog{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;min-width:70px}
+.prog i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.prog i.ok{background:var(--ok)}
+.chart svg{width:100%;height:auto;display:block}
+.chart .bar{fill:var(--accent)} .chart .bar.cur{fill:var(--ok)}
+.chart text{fill:var(--muted);font-family:var(--body);font-size:11px}
+.chart text.v{fill:var(--ink);font-weight:600}
+.chart line{stroke:var(--line)}
+.gps{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+
+.empty{text-align:center;padding:28px 16px;color:var(--muted);border:2px dashed var(--line);border-radius:var(--r);background:var(--surface)}
+.empty strong{display:block;font-family:var(--display);font-size:1.3rem;color:var(--ink);margin-bottom:4px}
+ol.passos{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink)}
+ol.passos b{color:var(--accent)}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:20}
+.bar .wrap{display:flex;gap:10px;align-items:center;padding-block:10px}
+.bar .grow{flex:1;min-width:0;font-size:.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:grid;place-items:center;z-index:50;padding:16px}
+.modal .box{background:var(--surface);border-radius:12px;max-width:480px;width:100%;max-height:calc(100vh - 32px);overflow:auto;padding:20px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
+.modal .box.larga{max-width:620px}
+.modal .box h3{font-size:1.35rem}
+.modal .box p{margin:0;color:var(--muted);white-space:pre-line}
+.modal .col{display:flex;flex-direction:column;gap:8px}
+.modal .col .btn{justify-content:flex-start;text-align:left}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:.9rem;z-index:60;max-width:calc(100% - 32px)}
+footer.cred{color:var(--muted);font-size:.78rem;text-align:center;padding-block:8px 20px}
+@media (prefers-reduced-motion:no-preference){.item,.step,.tile{transition:border-color .15s,box-shadow .15s}}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <div class="brand"><h1>Orçamento <em>de Campo</em></h1><small id="sub">Levantamento de necessidades e proposta de valores</small></div>
+  <div class="topbtns" id="topbtns"></div>
+</div></div>
+<div class="stripe"></div>
+<div class="wrap" id="stepsWrap"></div>
+<main class="wrap" id="main"></main>
+<footer class="cred wrap">Desenvolvido por Wendel Emílio de Souza Matias · oficial.respostas@gmail.com</footer>
+<div class="bar"><div class="wrap" id="bar"></div></div>
+
+<script>
+'use strict';
+/* =========================================================
+   Orçamento de Campo — Guardião Serviços de Qualidade
+   Desenvolvido por Wendel Emílio de Souza Matias
+   oficial.respostas@gmail.com
+   ========================================================= */
+
+// =========================================================
+// 1. Dados fixos
+// =========================================================
+const CATALOGO = [
+  { cat: 'Portaria e recepção', itens: [
+    ['port24',  'Portaria 24 horas (escala 12x36)', 'posto', 'mensal'],
+    ['portDia', 'Porteiro diurno 12h (12x36)', 'posto', 'mensal'],
+    ['portNoi', 'Porteiro noturno 12h (12x36)', 'posto', 'mensal'],
+    ['recep',   'Recepcionista (44h semanais)', 'profissional', 'mensal'],
+    ['folg',    'Folguista / cobertura de folgas', 'profissional', 'mensal']
+  ]},
+  { cat: 'Vigia e segurança patrimonial', itens: [
+    ['vigNoi',  'Vigia noturno (12x36)', 'posto', 'mensal'],
+    ['vigDia',  'Vigia diurno (12x36)', 'posto', 'mensal'],
+    ['ronda',   'Ronda motorizada periódica', 'mês', 'mensal'],
+    ['acesso',  'Controle de acesso de visitantes e prestadores', 'mês', 'mensal'],
+    ['evento',  'Vigia para evento', 'diária', 'avulso']
+  ]},
+  { cat: 'Limpeza e conservação', itens: [
+    ['limp44',  'Auxiliar de limpeza (44h semanais)', 'profissional', 'mensal'],
+    ['zel',     'Zelador', 'profissional', 'mensal'],
+    ['diar',    'Diarista de limpeza', 'diária', 'avulso'],
+    ['jard',    'Jardinagem e roçagem', 'mês', 'mensal'],
+    ['pisc',    'Manutenção de piscina', 'mês', 'mensal'],
+    ['posobra', 'Limpeza pós-obra', 'serviço', 'avulso'],
+    ['mat',     'Fornecimento de material de limpeza', 'mês', 'mensal']
+  ]},
+  { cat: 'Consultoria e tecnologia', itens: [
+    ['risco',   'Análise de risco com relatório', 'serviço', 'avulso'],
+    ['monit',   'Monitoramento de câmeras', 'mês', 'mensal'],
+    ['instCam', 'Instalação de câmeras', 'câmera', 'avulso'],
+    ['trein',   'Treinamento de equipe', 'turma', 'avulso']
+  ]}
+];
+const ITEM_MAP = {};
+CATALOGO.forEach(c => c.itens.forEach(i => { ITEM_MAP[i[0]] = { id: i[0], nome: i[1], unidade: i[2], tipo: i[3], cat: c.cat }; }));
+
+// Calculadora de posto
+const FUNCOES = { porteiro: 'Porteiro', vigia: 'Vigia', limpeza: 'Auxiliar de limpeza', recepcao: 'Recepcionista', zelador: 'Zelador' };
+const ESCALAS = {
+  '24h':   { t: '24 horas (12x36)',    dia: 2, noite: 2, dias: 15 },
+  dia12:   { t: 'Diurno 12h (12x36)',  dia: 2, noite: 0, dias: 15 },
+  noite12: { t: 'Noturno 12h (12x36)', dia: 0, noite: 2, dias: 15 },
+  h44:     { t: '44 horas semanais',   dia: 1, noite: 0, dias: 22 }
+};
+const POSTO = { port24: ['porteiro', '24h'], portDia: ['porteiro', 'dia12'], portNoi: ['porteiro', 'noite12'], recep: ['recepcao', 'h44'], folg: ['porteiro', 'h44'],
+  vigNoi: ['vigia', 'noite12'], vigDia: ['vigia', 'dia12'], limp44: ['limpeza', 'h44'], zel: ['zelador', 'h44'] };
+const CUSTOS_PADRAO = { salarios: { porteiro: 0, vigia: 0, limpeza: 0, recepcao: 0, zelador: 0 }, noturno: 20, horasNoturnas: 7, encargos: 0, vt: 0, va: 0, uniforme: 0, outros: 0, impostos: 0, margem: 0 };
+
+const PACOTES_PADRAO = [
+  { id: 'p_cond', nome: 'Condomínio residencial', itens: { port24: 1, limp44: 1, zel: 1, jard: 1, acesso: 1 } },
+  { id: 'p_chac', nome: 'Condomínio de chácaras', itens: { vigNoi: 1, portDia: 1, ronda: 1, acesso: 1 } },
+  { id: 'p_emp',  nome: 'Empresa / indústria',    itens: { port24: 1, vigNoi: 1, monit: 1, risco: 1 } },
+  { id: 'p_res',  nome: 'Residência',             itens: { vigNoi: 1, monit: 1, instCam: 4 } },
+  { id: 'p_evt',  nome: 'Evento',                 itens: { evento: 2, diar: 1 } }
+];
+
+const CLAUSULAS_PADRAO = `CLÁUSULA 1ª – DO OBJETO
+A CONTRATADA prestará à CONTRATANTE os serviços descritos no Anexo I deste contrato, no endereço {ENDERECO}.
+
+CLÁUSULA 2ª – DO PREÇO E DO PAGAMENTO
+Pelos serviços, a CONTRATANTE pagará à CONTRATADA o valor mensal de {VALOR} ({VALOR_EXTENSO}), com vencimento todo dia {VENCIMENTO} do mês seguinte ao da prestação dos serviços.
+O atraso no pagamento sujeita a CONTRATANTE a multa de 2% e juros de 1% ao mês sobre o valor em atraso.
+
+CLÁUSULA 3ª – DA VIGÊNCIA
+Este contrato vigora por {MESES} meses a partir de {INICIO}, sendo renovado automaticamente por igual período se nenhuma das partes se manifestar em contrário com 30 dias de antecedência.
+
+CLÁUSULA 4ª – DO REAJUSTE
+O valor mensal será reajustado a cada 12 meses pelo índice do IPCA acumulado no período, ou sempre que houver reajuste do piso salarial da categoria por convenção coletiva, na mesma proporção.
+
+CLÁUSULA 5ª – DAS OBRIGAÇÕES DA CONTRATADA
+Fornecer profissionais treinados, uniformizados e identificados; arcar com todos os salários, encargos trabalhistas, previdenciários e benefícios de seus empregados; repor ausências e faltas sem custo adicional; manter supervisão periódica do serviço.
+
+CLÁUSULA 6ª – DAS OBRIGAÇÕES DA CONTRATANTE
+Efetuar os pagamentos nas datas combinadas; oferecer local de apoio adequado aos profissionais (água, banheiro e abrigo); comunicar por escrito qualquer ocorrência ou reclamação sobre os serviços.
+
+CLÁUSULA 7ª – DA RESCISÃO
+Qualquer das partes poderá rescindir este contrato mediante aviso prévio por escrito de 30 dias. O descumprimento de cláusula contratual permite a rescisão imediata pela parte prejudicada.
+
+CLÁUSULA 8ª – DO FORO
+Fica eleito o foro da comarca de {CIDADE} para dirimir quaisquer dúvidas oriundas deste contrato.`;
+
+const ESTRUTURA = [
+  ['guarita',  'Guarita / portaria física', false],
+  ['cameras',  'Câmeras de segurança (CFTV)', true],
+  ['dvr',      'Gravador de imagens (DVR/NVR)', false],
+  ['interf',   'Interfone', false],
+  ['portao',   'Portão eletrônico', true],
+  ['cancela',  'Cancela de veículos', true],
+  ['cerca',    'Cerca elétrica', false],
+  ['concert',  'Concertina / ofendículos', false],
+  ['alarme',   'Alarme', false],
+  ['ilum',     'Iluminação externa', false],
+  ['acessoEl', 'Controle de acesso eletrônico (tag/biometria)', false],
+  ['radio',    'Rádio comunicador', true],
+  ['extint',   'Extintores', true],
+  ['apoio',    'Banheiro / copa para funcionários', false],
+  ['livro',    'Livro de ocorrências', false],
+  ['muro',     'Muros / alambrados', false]
+];
+const SITUACAO = { bom: 'Possui e funciona', reparo: 'Possui, precisa reparo', nao: 'Não possui' };
+const TIPOS_CLIENTE = ['Condomínio residencial', 'Condomínio de chácaras', 'Empresa / indústria', 'Comércio', 'Residência', 'Evento', 'Outro'];
+const STEPS = ['Cliente', 'Necessidades', 'O local possui', 'Fotos', 'Orçamento'];
+const STATUS = { visitar: 'A visitar', levantamento: 'Em levantamento', enviado: 'Orçamento enviado', negociacao: 'Em negociação', fechado: 'Contrato fechado', perdido: 'Não fechado' };
+const ABERTO = s => s === 'enviado' || s === 'negociacao';
+const MOTIVOS_PERDA = ['Preço', 'Escolheu outra empresa', 'Desistiu do serviço', 'Sem retorno do cliente', 'Outro'];
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const MESES_EXT = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+// =========================================================
+// 2. Utilidades
+// =========================================================
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  if (props) for (const k in props) {
+    const v = props[k];
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'style') el.style.cssText = v;
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'value' || k === 'checked' || k === 'selected') el[k] = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  kids.flat(Infinity).forEach(c => { if (c == null || c === false) return; el.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return el;
+}
+function svg(tag, attrs, ...kids) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const k in attrs || {}) el.setAttribute(k, attrs[k]);
+  kids.flat(Infinity).forEach(c => { if (c == null) return; el.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return el;
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const brl = n => (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+function num(s) {
+  if (typeof s === 'number') return isFinite(s) ? s : 0;
+  s = String(s || '').replace(/[R$%\s]/g, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  const n = parseFloat(s); return isFinite(n) ? n : 0;
+}
+const fmtNum = n => (Number(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const isoDe = d => { d = new Date(d); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const hojeISO = () => isoDe(new Date());
+const fmtData = iso => { if (!iso) return ''; const [a, m, d] = String(iso).slice(0, 10).split('-'); return `${d}/${m}/${a}`; };
+const fmtDataHora = s => { if (!s) return ''; const [d, t] = String(s).split('T'); return fmtData(d) + (t ? ' às ' + t.slice(0, 5) : ''); };
+const fmtMomento = ms => new Date(ms).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
+const DIA = 86400000;
+const meiaNoite = d => { d = new Date(d); d.setHours(0, 0, 0, 0); return d; };
+const diasAte = d => Math.round((meiaNoite(d) - meiaNoite(new Date())) / DIA);
+const somaMeses = (iso, m) => { const d = new Date(iso + 'T12:00:00'); d.setMonth(d.getMonth() + (Number(m) || 0)); return isoDe(d); };
+const mesDe = v => { if (!v) return ''; if (typeof v === 'number') return isoDe(v).slice(0, 7); return String(v).slice(0, 7); };
+const nomeMes = ym => { const [a, m] = ym.split('-'); return `${MESES[+m - 1]}/${a.slice(2)}`; };
+const dataExtenso = (d = new Date()) => `${d.getDate()} de ${MESES_EXT[d.getMonth()]} de ${d.getFullYear()}`;
+const curto = v => v >= 1e6 ? (v / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mi' : v >= 1e3 ? (v / 1e3).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' mil' : Math.round(v).toLocaleString('pt-BR');
+
+function extenso(v) {
+  v = Math.round((Number(v) || 0) * 100) / 100;
+  const inteiro = Math.floor(v), cent = Math.round((v - inteiro) * 100);
+  const U = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+  const D = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+  const C = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+  const ate999 = n => {
+    if (n === 100) return 'cem';
+    const c = Math.floor(n / 100), r = n % 100, p = [];
+    if (c) p.push(C[c]);
+    if (r) p.push(r < 20 ? U[r] : D[Math.floor(r / 10)] + (r % 10 ? ' e ' + U[r % 10] : ''));
+    return p.join(' e ');
+  };
+  const nomes = [['', ''], ['mil', 'mil'], ['milhão', 'milhões'], ['bilhão', 'bilhões']];
+  const grupos = []; let n = inteiro; while (n > 0) { grupos.push(n % 1000); n = Math.floor(n / 1000); }
+  const partes = [];
+  for (let i = grupos.length - 1; i >= 0; i--) {
+    const g = grupos[i]; if (!g) continue;
+    const t = i === 1 && g === 1 ? 'mil' : ate999(g) + (i > 0 ? ' ' + (g === 1 ? nomes[i][0] : nomes[i][1]) : '');
+    partes.push({ t, g, i });
+  }
+  let txt = partes.map((p, k) => k === 0 ? p.t : ((k === partes.length - 1 && (p.g < 100 || p.g % 100 === 0)) ? ' e ' : ' ') + p.t).join('');
+  if (inteiro) txt += (inteiro >= 1e6 && inteiro % 1e6 === 0 ? ' de' : '') + (inteiro === 1 ? ' real' : ' reais');
+  if (cent) txt += (inteiro ? ' e ' : '') + ate999(cent) + (cent === 1 ? ' centavo' : ' centavos');
+  return txt || 'zero real';
+}
+function carregarScript(url) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => rej(new Error('script')); document.head.append(s); });
+}
+
+// =========================================================
+// 3. Firebase: login e banco de dados
+// =========================================================
+const FB = {
+  projeto: 'guardiao-c92e3',
+  chave: 'AIzaSyAvDp70k-I5kHRpW6XEY9qtVXhmtAV6wGY',
+  base() { return `https://firestore.googleapis.com/v1/projects/${this.projeto}/databases/(default)/documents`; },
+  async cab(corpo) {
+    const hd = {}; if (corpo) hd['Content-Type'] = 'application/json';
+    const t = await token(); if (t) hd.Authorization = 'Bearer ' + t;
+    return hd;
+  },
+  async req(metodo, caminho, corpo, extra = '') {
+    const r = await fetch(`${this.base()}/${caminho}?key=${this.chave}${extra}`, { method: metodo, headers: await this.cab(corpo), body: corpo ? JSON.stringify(corpo) : undefined });
+    if (r.status === 404 && (metodo === 'GET' || metodo === 'DELETE')) return null;
+    if (!r.ok) { const e = new Error('Firebase ' + r.status); e.status = r.status; throw e; }
+    return metodo === 'DELETE' ? true : r.json();
+  },
+  async listar(colecao) {
+    const docs = []; let tk = '';
+    do {
+      const r = await this.req('GET', colecao, null, '&pageSize=300' + (tk ? '&pageToken=' + encodeURIComponent(tk) : ''));
+      docs.push(...((r && r.documents) || [])); tk = (r && r.nextPageToken) || '';
+    } while (tk);
+    return docs;
+  },
+  async consultar(colecao, campo, valor) {
+    const corpo = { structuredQuery: { from: [{ collectionId: colecao }], where: { fieldFilter: { field: { fieldPath: campo }, op: 'EQUAL', value: { stringValue: valor } } } } };
+    const r = await fetch(`${this.base()}:runQuery?key=${this.chave}`, { method: 'POST', headers: await this.cab(true), body: JSON.stringify(corpo) });
+    if (!r.ok) { const e = new Error('Firebase ' + r.status); e.status = r.status; throw e; }
+    return ((await r.json()) || []).filter(x => x.document).map(x => x.document);
+  }
+};
+const paraCampo = v => typeof v === 'boolean' ? { booleanValue: v } : typeof v === 'number' ? (Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v }) : v == null ? { nullValue: null } : { stringValue: String(v) };
+const deCampo = c => 'stringValue' in c ? c.stringValue : 'booleanValue' in c ? c.booleanValue : 'integerValue' in c ? Number(c.integerValue) : 'doubleValue' in c ? c.doubleValue : null;
+const paraCampos = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, paraCampo(v)]));
+const deCampos = f => Object.fromEntries(Object.entries(f || {}).map(([k, c]) => [k, deCampo(c)]));
+const idDoc = d => d.name.split('/').pop();
+
+// Sessão (quem está conectado neste aparelho)
+const SESSAO = 'orc_sessao_v2';
+let sessao = null; // { uid, email, idToken, refreshToken, expira, papel: 'gestor'|'rep'|'config', nome }
+function lerSessao() { try { return JSON.parse(localStorage.getItem(SESSAO) || 'null'); } catch (e) { return null; } }
+function gravarSessao() { try { if (sessao) localStorage.setItem(SESSAO, JSON.stringify(sessao)); else localStorage.removeItem(SESSAO); } catch (e) {} }
+const souGestor = () => !!sessao && sessao.papel === 'gestor';
+const souRep = () => !!sessao && sessao.papel === 'rep';
+
+async function authPost(acao, corpo) {
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${acao}?key=${FB.chave}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const c = (j.error && j.error.message) || 'ERRO'; const e = new Error(c); e.codigo = c.split(' ')[0]; throw e; }
+  return j;
+}
+const novaSessao = j => ({ uid: j.localId, email: (j.email || '').toLowerCase(), idToken: j.idToken, refreshToken: j.refreshToken, expira: Date.now() + (Number(j.expiresIn) || 3600) * 1000 - 60000 });
+async function token() {
+  if (!sessao || !sessao.idToken) return null;
+  if (Date.now() < sessao.expira) return sessao.idToken;
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${FB.chave}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(sessao.refreshToken) });
+  if (!r.ok) { const e = new Error('sessão'); e.status = r.status >= 500 ? r.status : 401; throw e; }
+  const j = await r.json();
+  sessao.idToken = j.id_token; sessao.refreshToken = j.refresh_token; sessao.expira = Date.now() + Number(j.expires_in) * 1000 - 60000;
+  gravarSessao(); return sessao.idToken;
+}
+function msgAuth(e) {
+  const c = (e && e.codigo) || '';
+  if (/INVALID_LOGIN_CREDENTIALS|INVALID_PASSWORD|EMAIL_NOT_FOUND/.test(c)) return 'E-mail ou senha incorretos.';
+  if (/USER_DISABLED/.test(c)) return 'Este acesso foi desativado.';
+  if (/TOO_MANY_ATTEMPTS/.test(c)) return 'Muitas tentativas. Espere alguns minutos e tente de novo.';
+  if (/OPERATION_NOT_ALLOWED|CONFIGURATION_NOT_FOUND/.test(c)) return 'O login por e-mail e senha ainda não está ativado no Firebase (Authentication → Método de login → E-mail/senha).';
+  if (/EMAIL_EXISTS/.test(c)) return 'Já existe uma conta com este e-mail.';
+  if (/WEAK_PASSWORD/.test(c)) return 'A senha precisa ter pelo menos 6 caracteres.';
+  if (/INVALID_EMAIL/.test(c)) return 'Esse e-mail não é válido.';
+  if (!c || /Failed to fetch|NetworkError/.test(String(e && e.message))) return 'Sem conexão com a internet.';
+  return 'Não foi possível entrar (' + c + ').';
+}
+function regrasFirebase(email) {
+  const e = String(email || 'SEU-EMAIL@exemplo.com').toLowerCase().replace(/'/g, '');
+  return `    // ===== Orçamento de Campo (início) =====
+    function orcGestor() { return request.auth != null && request.auth.token.email == '${e}'; }
+    function orcRep() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/orc_reps/$(request.auth.uid))
+        && get(/databases/$(database)/documents/orc_reps/$(request.auth.uid)).data.ativo == true;
+    }
+    match /orc_config/{id} { allow read: if orcGestor() || orcRep(); allow write: if orcGestor(); }
+    match /orc_reps/{uid} { allow read: if orcGestor() || (request.auth != null && request.auth.uid == uid); allow write: if orcGestor(); }
+    match /orc_levantamentos/{id} {
+      allow read: if orcGestor() || (orcRep() && resource.data.repUid == request.auth.uid);
+      allow create: if orcGestor() || (orcRep() && request.resource.data.repUid == request.auth.uid);
+      allow update: if orcGestor() || (orcRep() && resource.data.repUid == request.auth.uid && request.resource.data.repUid == request.auth.uid);
+      allow delete: if orcGestor();
+    }
+    match /orc_fotos/{id} {
+      allow read, delete: if orcGestor() || (orcRep() && resource.data.repUid == request.auth.uid);
+      allow create, update: if orcGestor() || (orcRep() && request.resource.data.repUid == request.auth.uid);
+    }
+    // ===== Orçamento de Campo (fim) =====`;
+}
+
+// =========================================================
+// 4. Banco local do aparelho (IndexedDB)
+// =========================================================
+const DB = {
+  db: null, mem: { levs: new Map(), cfg: new Map() },
+  open() {
+    return new Promise(res => {
+      try {
+        const r = indexedDB.open('orcamento-de-campo', 1);
+        r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('levs', { keyPath: 'id' }); d.createObjectStore('cfg'); };
+        r.onsuccess = () => { this.db = r.result; res(); };
+        r.onerror = () => res();
+      } catch (e) { res(); }
+    });
+  },
+  tx(store, mode, fn) {
+    return new Promise((res, rej) => {
+      const t = this.db.transaction(store, mode); const s = t.objectStore(store);
+      const r = fn(s); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error);
+    });
+  },
+  async all() { if (!this.db) return [...this.mem.levs.values()]; return this.tx('levs', 'readonly', s => s.getAll()); },
+  async put(l) { if (!this.db) { this.mem.levs.set(l.id, l); return; } return this.tx('levs', 'readwrite', s => s.put(l)); },
+  async del(id) { if (!this.db) { this.mem.levs.delete(id); return; } return this.tx('levs', 'readwrite', s => s.delete(id)); },
+  async limpar() { if (!this.db) { this.mem.levs.clear(); return; } return this.tx('levs', 'readwrite', s => s.clear()); },
+  async get(k) { if (!this.db) return this.mem.cfg.get(k); return this.tx('cfg', 'readonly', s => s.get(k)); },
+  async set(k, v) { if (!this.db) { this.mem.cfg.set(k, v); return; } return this.tx('cfg', 'readwrite', s => s.put(v, k)); }
+};
+
+// =========================================================
+// 5. Estado
+// =========================================================
+const CFG_PADRAO = () => ({
+  empresa: { nome: 'Guardião Serviços de Qualidade', cnpj: '', telefone: '', email: '', endereco: '', cidade: 'Goiânia - GO', representante: '', logo: '', logoW: 1, logoH: 1 },
+  precos: {}, custos: JSON.parse(JSON.stringify(CUSTOS_PADRAO)), pacotes: [], clausulas: CLAUSULAS_PADRAO, gestorEmail: ''
+});
+let cfg = CFG_PADRAO();
+let reps = [];            // representantes (lista do gestor; o representante só tem o próprio)
+let levs = [];
+let lev = null;
+let view = 'login';       // login | setup | inicio | conta | painel | reps | relatorios | empresa | editor
+let origem = 'inicio';
+let step = 0;
+let filtro = 'todos', busca = '', filtroRep = '';
+let mesRel = hojeISO().slice(0, 7);
+let saveTimer = null;
+
+function ajustarCfg() {
+  const p = CFG_PADRAO();
+  cfg = Object.assign(p, cfg);
+  cfg.empresa = Object.assign(p.empresa, cfg.empresa || {});
+  cfg.custos = Object.assign(JSON.parse(JSON.stringify(CUSTOS_PADRAO)), cfg.custos || {});
+  cfg.custos.salarios = Object.assign({}, CUSTOS_PADRAO.salarios, cfg.custos.salarios || {});
+  cfg.pacotes = cfg.pacotes || []; cfg.precos = cfg.precos || {};
+  if (!cfg.clausulas) cfg.clausulas = CLAUSULAS_PADRAO;
+}
+const repsAtivos = () => reps.filter(r => r.ativo !== false).sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
+const repPorId = id => reps.find(r => r.uid === id);
+const nomeRep = l => { if (!l.repId) return ''; const r = repPorId(l.repId); if (r) return r.nome; if (sessao && sessao.uid === l.repId) return sessao.nome || l.repNome || ''; return l.repNome || ''; };
+const opcoesRep = (semRotulo = 'Sem representante') => [['', semRotulo], ...repsAtivos().map(r => [r.uid, r.nome])];
+const ativos = () => levs.filter(l => !l.excluido);
+const minhas = () => souRep() ? ativos().filter(l => l.repId === sessao.uid) : [];
+
+function novoLev() {
+  const d = new Date(), p2 = n => String(n).padStart(2, '0');
+  let numero = `ORC-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}`;
+  if (levs.some(x => x.numero === numero)) { let i = 2; while (levs.some(x => x.numero === numero + '-' + i)) i++; numero += '-' + i; }
+  return migrar({ id: uid(), numero, criadoEm: Date.now(), atualizadoEm: Date.now(), status: 'levantamento',
+    historico: [{ em: Date.now(), status: 'levantamento', nota: 'Levantamento iniciado' }] });
+}
+function migrar(l) {
+  l.cliente = Object.assign({ tipo: TIPOS_CLIENTE[0], nome: '', responsavel: '', telefone: '', email: '', endereco: '', dataVisita: hojeISO(), unidades: '', observacoes: '' }, l.cliente || {});
+  l.servicos = l.servicos || {}; l.extras = l.extras || []; l.estrutura = l.estrutura || {}; l.obsLocal = l.obsLocal || ''; l.fotos = l.fotos || [];
+  l.orc = Object.assign({ desconto: 0, validade: 15, pagamento: '', inicio: '', observacoes: '' }, l.orc || {});
+  l.status = STATUS[l.status] ? l.status : 'levantamento';
+  l.historico = l.historico || []; l.contrato = l.contrato || {}; l.agenda = l.agenda || ''; l.motivo = l.motivo || ''; l.repId = l.repId || '';
+  return l;
+}
+function itensSelecionados(l) {
+  const out = [];
+  CATALOGO.forEach(c => c.itens.forEach(([id]) => { const s = l.servicos[id]; if (s && s.sel) out.push({ ...ITEM_MAP[id], qtd: num(s.qtd), preco: num(s.preco), obs: s.obs || '' }); }));
+  l.extras.forEach(e => { if (e.sel) out.push({ id: e.id, nome: e.nome, unidade: e.unidade, tipo: e.tipo, cat: 'Outros serviços', qtd: num(e.qtd), preco: num(e.preco), obs: e.obs || '' }); });
+  return out;
+}
+function totais(l) {
+  const its = itensSelecionados(l);
+  let sm = 0, sa = 0;
+  its.forEach(i => { const t = i.qtd * i.preco; if (i.tipo === 'mensal') sm += t; else sa += t; });
+  const dp = Math.min(Math.max(num(l.orc.desconto), 0), 100) / 100;
+  return { its, sm, sa, dm: sm * dp, da: sa * dp, tm: sm * (1 - dp), ta: sa * (1 - dp), dpct: dp * 100 };
+}
+const valorFechado = l => num(l.contrato.valor) || totais(l).tm;
+function validade(l) { if (!l.emitidoEm) return null; const venc = new Date(l.emitidoEm + (num(l.orc.validade) || 15) * DIA); return { venc, falta: diasAte(venc) }; }
+function textoValidade(l) {
+  const v = validade(l); if (!v) return null;
+  const d = v.venc.toLocaleDateString('pt-BR');
+  if (v.falta < 0) return h('span', { class: 'alerta' }, `Validade vencida há ${-v.falta} dia(s) (${d})`);
+  if (v.falta === 0) return h('span', { class: 'alerta' }, `Validade vence hoje (${d})`);
+  if (v.falta <= 3) return h('span', { class: 'atencao' }, `Validade vence em ${v.falta} dia(s) (${d})`);
+  return h('span', null, `Válido até ${d} (${v.falta} dias)`);
+}
+function contratoInfo(l) { const c = l.contrato; if (!c.inicio) return null; const fim = c.meses ? somaMeses(c.inicio, c.meses) : ''; return { fim, falta: fim ? diasAte(fim + 'T12:00:00') : null }; }
+
+function calcPosto(funcao, escala, c = cfg.custos) {
+  const e = ESCALAS[escala]; const sal = num(c.salarios[funcao]);
+  const adicNoite = sal * num(c.noturno) / 100 * (num(c.horasNoturnas) / 12);
+  const pessoa = noite => {
+    const base = sal + (noite ? adicNoite : 0); const enc = base * num(c.encargos) / 100;
+    const ben = (num(c.vt) + num(c.va)) * e.dias + num(c.uniforme) + num(c.outros);
+    return { base, enc, ben, total: base + enc + ben };
+  };
+  const pd = pessoa(false), pn = pessoa(true);
+  const custo = pd.total * e.dia + pn.total * e.noite;
+  const fator = 1 - (num(c.impostos) + num(c.margem)) / 100;
+  const preco = fator > 0 ? custo / fator : 0;
+  return { e, sal, adicNoite, pd, pn, pessoas: e.dia + e.noite, custo, impostos: preco * num(c.impostos) / 100, margem: preco * num(c.margem) / 100, preco, fatorOk: fator > 0 };
+}
+
+// =========================================================
+// 6. Gravação e sincronização com a nuvem
+// =========================================================
+const nuvem = { estado: 'aguardando' };
+function salvar(rapido) {
+  if (!lev) return;
+  lev.atualizadoEm = Date.now();
+  clearTimeout(saveTimer);
+  const go = async () => {
+    try { lev.pendente = true; await DB.put(lev); const i = levs.findIndex(x => x.id === lev.id); if (i < 0) levs.push(lev); else levs[i] = lev; setStatus('Salvo no aparelho'); agendarEnvio(); }
+    catch (e) { aviso('Não foi possível salvar', 'O armazenamento do aparelho está cheio ou bloqueado.'); }
+  };
+  if (rapido) return go(); saveTimer = setTimeout(go, 400);
+}
+async function gravar(l) { l.atualizadoEm = Date.now(); l.pendente = true; await DB.put(l); const i = levs.findIndex(x => x.id === l.id); if (i < 0) levs.push(l); else levs[i] = l; agendarEnvio(); }
+async function salvarCfg() { try { cfg.atualizadoEm = Date.now(); cfg.pendente = true; await DB.set('cfg', cfg); agendarEnvio(); } catch (e) { aviso('Não foi possível salvar', 'Os dados da empresa não foram gravados.'); } }
+
+let envioTimer = null, sincronizando = false, deNovo = false;
+function agendarEnvio() { clearTimeout(envioTimer); envioTimer = setTimeout(() => sincronizar(false), 1500); pintaNuvem(); }
+function paraNuvem(l) {
+  const c = JSON.parse(JSON.stringify(l));
+  c.fotos = (c.fotos || []).map(f => ({ id: f.id, w: f.w, h: f.h, legenda: f.legenda || '', em: f.em || null, gps: f.gps || null }));
+  delete c.pendente; delete c.fotosApagar;
+  return { fields: { dados: { stringValue: JSON.stringify(c) }, atualizadoEm: { integerValue: String(l.atualizadoEm || 0) }, status: { stringValue: l.status || '' }, excluido: { booleanValue: !!l.excluido }, repUid: { stringValue: l.repId || '' } } };
+}
+async function enviarLev(l) {
+  const marca = l.atualizadoEm;
+  if (l.excluido) {
+    for (const f of l.fotos) { try { await FB.req('DELETE', 'orc_fotos/' + f.id); } catch (e) {} }
+  } else {
+    for (const f of l.fotos) if (!f.nuvem && f.data) {
+      await FB.req('PATCH', 'orc_fotos/' + f.id, { fields: { lev: { stringValue: l.id }, repUid: { stringValue: l.repId || '' }, data: { stringValue: f.data } } });
+      f.nuvem = true;
+    }
+    for (const id of (l.fotosApagar || [])) { try { await FB.req('DELETE', 'orc_fotos/' + id); } catch (e) {} }
+    l.fotosApagar = [];
+  }
+  await FB.req('PATCH', 'orc_levantamentos/' + l.id, paraNuvem(l));
+  if (l.atualizadoEm === marca) l.pendente = false;
+  if (l.excluido) l.fotos = l.fotos.map(f => ({ id: f.id }));
+  await DB.put(l);
+}
+async function enviarCfg() {
+  const c = JSON.parse(JSON.stringify(cfg)); delete c.pendente;
+  const marca = cfg.atualizadoEm;
+  await FB.req('PATCH', 'orc_config/principal', { fields: { dados: { stringValue: JSON.stringify(c) }, atualizadoEm: { integerValue: String(cfg.atualizadoEm || 0) } } });
+  if (cfg.atualizadoEm === marca) { cfg.pendente = false; await DB.set('cfg', cfg); }
+}
+async function puxarNuvem() {
+  let mudou = false;
+  // representantes
+  if (souGestor()) {
+    const docs = await FB.listar('orc_reps');
+    const novos = docs.map(d => Object.assign({ uid: idDoc(d) }, deCampos(d.fields)));
+    if (JSON.stringify(novos) !== JSON.stringify(reps)) { reps = novos; await DB.set('reps', reps); mudou = true; }
+  } else if (souRep()) {
+    const d = await FB.req('GET', 'orc_reps/' + sessao.uid);
+    const eu = d ? deCampos(d.fields) : null;
+    if (!eu || eu.ativo !== true) { await forcarSaida('Seu acesso foi desativado pelo gestor.'); return false; }
+    eu.uid = sessao.uid; reps = [eu];
+    if (sessao.nome !== eu.nome) { sessao.nome = eu.nome; gravarSessao(); mudou = true; }
+  }
+  // orçamentos
+  const docs = souGestor() ? await FB.listar('orc_levantamentos') : await FB.consultar('orc_levantamentos', 'repUid', sessao.uid);
+  const lista = []; docs.forEach(d => { try { lista.push(JSON.parse(d.fields.dados.stringValue)); } catch (e) {} });
+  const ids = new Set(lista.map(c => c && c.id));
+  for (const c of lista) {
+    if (!c || !c.id) continue;
+    const local = levs.find(x => x.id === c.id);
+    if (local && (local.atualizadoEm || 0) >= (c.atualizadoEm || 0)) continue;
+    if (local && view === 'editor' && lev && lev.id === c.id) {
+      ['status', 'historico', 'contrato', 'emitidoEm', 'motivo', 'agenda', 'excluido', 'repId', 'repNome'].forEach(k => { if (c[k] !== undefined) lev[k] = c[k]; });
+      continue;
+    }
+    const fotosLocais = {}; (local ? local.fotos : []).forEach(f => { if (f.data) fotosLocais[f.id] = f.data; });
+    c.fotos = (c.fotos || []).map(f => ({ ...f, data: fotosLocais[f.id] || '', nuvem: true }));
+    migrar(c); c.pendente = false;
+    await DB.put(c);
+    if (local) Object.assign(local, c); else levs.push(c);
+    mudou = true;
+  }
+  // o representante perde da lista o que foi passado para outra pessoa
+  if (souRep()) for (const l of [...levs]) if (!ids.has(l.id) && !l.pendente && !(view === 'editor' && lev && lev.id === l.id)) { await DB.del(l.id); levs = levs.filter(x => x !== l); mudou = true; }
+  // configuração da empresa
+  const d = await FB.req('GET', 'orc_config/principal');
+  if (d && d.fields && d.fields.dados) {
+    try {
+      const c = JSON.parse(d.fields.dados.stringValue);
+      if ((c.atualizadoEm || 0) > (cfg.atualizadoEm || 0) && !cfg.pendente) { cfg = c; ajustarCfg(); cfg.pendente = false; await DB.set('cfg', cfg); mudou = true; }
+    } catch (e) {}
+  }
+  return mudou;
+}
+async function sincronizar(puxar) {
+  if (!sessao || sessao.papel === 'config') return;
+  if (sincronizando) { deNovo = true; return; }
+  sincronizando = true; nuvem.estado = 'enviando'; pintaNuvem();
+  let mudou = false;
+  try {
+    if (souGestor() && cfg.pendente) await enviarCfg();
+    for (const l of levs.filter(x => x.pendente)) await enviarLev(l);
+    if (puxar) mudou = await puxarNuvem();
+    if (sessao) nuvem.estado = 'ok';
+  } catch (e) {
+    if (e.status === 401) { sincronizando = false; await forcarSaida('Sua sessão expirou. Entre de novo.'); return; }
+    nuvem.estado = e.status === 403 ? 'regras' : !e.status ? 'offline' : 'erro';
+  } finally {
+    sincronizando = false; pintaNuvem();
+    if (mudou && ['inicio', 'painel', 'reps', 'relatorios', 'empresa'].includes(view)) render();
+    if (deNovo) { deNovo = false; setTimeout(() => sincronizar(false), 300); }
+  }
+}
+const pendencias = () => levs.filter(l => l.pendente).length + (cfg.pendente && souGestor() ? 1 : 0);
+function pintaNuvem() {
+  const el = document.getElementById('nuvem'); if (!el) return;
+  const n = pendencias();
+  const [cls, txt] =
+    nuvem.estado === 'enviando' ? ['pend', 'Sincronizando…'] :
+    nuvem.estado === 'regras' ? ['erro', 'Nuvem bloqueada'] :
+    nuvem.estado === 'offline' ? ['off', n ? `Sem internet · ${n} a enviar` : 'Sem internet'] :
+    nuvem.estado === 'erro' ? ['erro', 'Erro na nuvem'] :
+    n ? ['pend', `${n} a enviar`] : nuvem.estado === 'ok' ? ['ok', 'Nuvem em dia'] : ['pend', 'Conectando…'];
+  el.className = 'tbtn nuvem ' + cls; el.replaceChildren(h('i'), txt);
+}
+async function infoNuvem() {
+  await sincronizar(true);
+  if (nuvem.estado === 'regras') aviso('A nuvem recusou o acesso', souGestor() ? 'As regras do Firebase não estão liberando este sistema. Confira em Minha empresa → Regras do Firebase se o texto publicado é o mesmo.' : 'Seu acesso não está liberado na nuvem. Fale com o gestor.');
+  else if (nuvem.estado === 'offline') aviso('Sem internet', 'Os dados estão salvos neste aparelho e serão enviados quando a conexão voltar.');
+  else if (nuvem.estado === 'erro') aviso('Erro na nuvem', 'O Firebase respondeu com erro. Os dados estão salvos no aparelho; o sistema tenta de novo a cada minuto.');
+  else if (sessao) toast('Tudo sincronizado com a nuvem');
+}
+async function garantirFotos(l) {
+  const falta = l.fotos.filter(f => !f.data);
+  if (!falta.length) return true;
+  let ok = true;
+  for (const f of falta) {
+    try { const d = await FB.req('GET', 'orc_fotos/' + f.id); if (d && d.fields && d.fields.data) { f.data = d.fields.data.stringValue; f.nuvem = true; } else ok = false; }
+    catch (e) { ok = false; }
+  }
+  try { await DB.put(l); } catch (e) {}
+  return ok;
+}
+
+// =========================================================
+// 7. Janelas
+// =========================================================
+function modal(titulo, texto, botoes, vertical) {
+  return new Promise(res => {
+    const fechar = v => { m.remove(); res(v); };
+    const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) fechar(false); } },
+      h('div', { class: 'box', role: 'dialog', 'aria-modal': 'true' },
+        h('h3', null, titulo), texto ? h('p', null, texto) : null,
+        h('div', { class: vertical ? 'col' : 'row', style: vertical ? '' : 'justify-content:flex-end' },
+          botoes.map(b => h('button', { class: 'btn ' + (b.cls || ''), type: 'button', onclick: () => fechar(b.v) }, b.t)))));
+    document.body.append(m);
+  });
+}
+const aviso = (t, x) => modal(t, x, [{ t: 'Entendi', v: true, cls: 'pri' }]);
+const confirma = (t, x, ok = 'Confirmar', cls = 'pri') => modal(t, x, [{ t: 'Cancelar', v: false }, { t: ok, v: true, cls }]);
+// campos: [{k, rot, tipo, val, ph, opts, req, im}] — validar(vals) devolve texto de erro; aoConfirmar(vals) pode ser assíncrono e devolver erro
+function formModal(titulo, texto, campos, okTxt = 'Salvar', validar, aoConfirmar) {
+  return new Promise(res => {
+    const els = {};
+    const fechar = v => { m.remove(); res(v); };
+    const corpo = campos.map(f => {
+      let el;
+      if (f.tipo === 'select') el = h('select', { id: 'fm_' + f.k }, f.opts.map(o => Array.isArray(o) ? h('option', { value: o[0], selected: o[0] === f.val }, o[1]) : h('option', { value: o, selected: o === f.val }, o)));
+      else if (f.tipo === 'textarea') { el = h('textarea', { id: 'fm_' + f.k, placeholder: f.ph || '' }); el.value = f.val || ''; }
+      else el = h('input', { type: f.tipo || 'text', id: 'fm_' + f.k, value: f.val ?? '', placeholder: f.ph || '', inputmode: f.im || null, autocomplete: f.tipo === 'password' ? 'new-password' : null });
+      els[f.k] = el; return campo(f.rot, el);
+    });
+    const erro = h('p', { style: 'color:var(--bad);margin:0;font-weight:600', hidden: true, role: 'alert' });
+    const okBtn = h('button', { type: 'submit', class: 'btn pri' }, okTxt);
+    const ok = async () => {
+      const vals = {};
+      for (const f of campos) {
+        vals[f.k] = els[f.k].value;
+        if (f.req && !String(vals[f.k]).trim()) { erro.textContent = `Preencha: ${f.rot}`; erro.hidden = false; els[f.k].focus(); return; }
+      }
+      const msg = validar && validar(vals);
+      if (msg) { erro.textContent = msg; erro.hidden = false; return; }
+      if (aoConfirmar) {
+        okBtn.disabled = true; okBtn.textContent = 'Aguarde…';
+        const e2 = await aoConfirmar(vals);
+        okBtn.disabled = false; okBtn.textContent = okTxt;
+        if (e2) { erro.textContent = e2; erro.hidden = false; return; }
+      }
+      fechar(vals);
+    };
+    const m = h('div', { class: 'modal' }, h('form', { class: 'box', onsubmit: e => { e.preventDefault(); ok(); } },
+      h('h3', null, titulo), texto ? h('p', null, texto) : null,
+      h('div', { class: 'grid', style: 'grid-template-columns:1fr' }, corpo), erro,
+      h('div', { class: 'row', style: 'justify-content:flex-end' }, h('button', { type: 'button', class: 'btn', onclick: () => fechar(null) }, 'Cancelar'), okBtn)));
+    document.body.append(m);
+    const first = m.querySelector('input,select,textarea'); if (first) first.focus();
+  });
+}
+function toast(msg) { const t = h('div', { class: 'toast', role: 'status' }, msg); document.body.append(t); setTimeout(() => t.remove(), 2800); }
+function setStatus(msg) { const s = document.getElementById('status'); if (s) s.textContent = msg; }
+async function copiar(texto, el) {
+  try { await navigator.clipboard.writeText(texto); toast('Copiado'); }
+  catch (e) { if (el) { el.focus(); el.select(); } toast('Selecionei o texto: use Copiar do celular'); }
+}
+
+// =========================================================
+// 8. Entrar, sair e primeiro acesso
+// =========================================================
+async function descobrirPapel(s) {
+  sessao = Object.assign(s, { papel: 'config' });
+  try {
+    const d = await FB.req('GET', 'orc_config/principal');
+    if (d && d.fields && d.fields.dados) {
+      const c = JSON.parse(d.fields.dados.stringValue);
+      if (String(c.gestorEmail || '').toLowerCase() === s.email) { cfg = c; ajustarCfg(); cfg.pendente = false; await DB.set('cfg', cfg); return 'gestor'; }
+    }
+  } catch (e) { if (e.status !== 403) throw e; }
+  try {
+    const r = await FB.req('GET', 'orc_reps/' + s.uid);
+    if (r) { const o = deCampos(r.fields); if (o.ativo === true) { s.nome = o.nome; return 'rep'; } return 'inativo'; }
+    return 'nada';
+  } catch (e) { if (e.status === 403) return 'nada'; throw e; }
+}
+async function entrar(email, senha) {
+  try {
+    const s = novaSessao(await authPost('signInWithPassword', { email: email.trim(), password: senha, returnSecureToken: true }));
+    const papel = await descobrirPapel(s);
+    if (papel === 'gestor' || papel === 'rep') {
+      sessao.papel = papel; gravarSessao();
+      levs = ((await DB.all()) || []).map(migrar).filter(l => papel === 'gestor' || l.repId === sessao.uid || l.pendente);
+      view = papel === 'gestor' ? 'painel' : 'inicio'; render(); topo(); sincronizar(true);
+      toast('Bem-vindo' + (sessao.nome ? ', ' + sessao.nome.split(' ')[0] : ''));
+      return null;
+    }
+    sessao = null;
+    if (papel === 'inativo') return 'Seu acesso está desativado. Fale com o gestor.';
+    return 'Esta conta não tem acesso ao sistema. Se você é o gestor e está configurando agora, use "Primeiro acesso do gestor".';
+  } catch (e) { sessao = null; return e.status ? 'A nuvem recusou o acesso (' + e.status + '). Confira as regras do Firebase.' : msgAuth(e); }
+}
+async function forcarSaida(msg) {
+  sessao = null; gravarSessao(); reps = []; view = 'login';
+  try { await DB.set('reps', []); } catch (e) {}
+  render(); topo(); if (msg) aviso('Faça login novamente', msg);
+}
+async function sair() {
+  const n = pendencias();
+  if (!await confirma('Sair deste aparelho?', n ? `Atenção: ${n} alteração(ões) ainda não chegaram à nuvem e serão perdidas se você sair agora. Conecte-se à internet e espere "Nuvem em dia".` : 'Os dados continuam salvos na nuvem. A cópia deste aparelho será apagada.', 'Sair', n ? 'danger' : 'pri')) return;
+  await DB.limpar(); levs = []; reps = []; await DB.set('reps', []);
+  sessao = null; gravarSessao(); view = 'login'; render(); topo();
+}
+async function esqueciSenha(emailPadrao) {
+  await formModal('Esqueci minha senha', 'Vamos mandar um link para você criar uma senha nova.', [{ k: 'email', rot: 'Seu e-mail', tipo: 'email', val: emailPadrao || '', req: true }], 'Enviar link', null,
+    async v => { try { await authPost('sendOobCode', { requestType: 'PASSWORD_RESET', email: v.email.trim() }); toast('Link enviado. Confira seu e-mail (e a caixa de spam).'); return null; } catch (e) { return msgAuth(e); } });
+}
+async function trocarMinhaSenha() {
+  await formModal('Trocar minha senha', null, [
+    { k: 'nova', rot: 'Nova senha (mínimo 6 caracteres)', tipo: 'password', req: true },
+    { k: 'conf', rot: 'Repita a nova senha', tipo: 'password', req: true }
+  ], 'Trocar', v => v.nova.length < 6 ? 'A senha precisa ter pelo menos 6 caracteres.' : v.nova !== v.conf ? 'As duas senhas não são iguais.' : null,
+  async v => {
+    try {
+      const j = await authPost('update', { idToken: await token(), password: v.nova, returnSecureToken: true });
+      Object.assign(sessao, { idToken: j.idToken, refreshToken: j.refreshToken, expira: Date.now() + Number(j.expiresIn || 3600) * 1000 - 60000 }); gravarSessao();
+      toast('Senha trocada'); return null;
+    } catch (e) { return /CREDENTIAL_TOO_OLD|TOKEN_EXPIRED/.test(e.codigo) ? 'Por segurança, saia e entre de novo antes de trocar a senha.' : msgAuth(e); }
+  });
+}
+
+function vLogin() {
+  const email = h('input', { type: 'email', id: 'lEmail', autocomplete: 'username', placeholder: 'seu@email.com' });
+  const senha = h('input', { type: 'password', id: 'lSenha', autocomplete: 'current-password' });
+  const erro = h('p', { style: 'margin:0;color:var(--bad);font-weight:600', hidden: true, role: 'alert' });
+  const btn = h('button', { class: 'btn pri', type: 'submit' }, 'Entrar');
+  const enviar = async e => {
+    e.preventDefault();
+    if (!email.value.trim() || !senha.value) { erro.textContent = 'Preencha o e-mail e a senha.'; erro.hidden = false; return; }
+    btn.disabled = true; btn.textContent = 'Entrando…'; erro.hidden = true;
+    const msg = await entrar(email.value, senha.value);
+    if (msg) { btn.disabled = false; btn.textContent = 'Entrar'; erro.textContent = msg; erro.hidden = false; }
+  };
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Entrar'), h('p', null, 'Gestor e representantes entram com o e-mail e a senha cadastrados.'))),
+    h('div', { class: 'panel' },
+      h('form', { class: 'grid', style: 'grid-template-columns:1fr', onsubmit: enviar }, campo('E-mail', email), campo('Senha', senha), erro,
+        h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: () => esqueciSenha(email.value) }, 'Esqueci minha senha')))),
+    h('div', { class: 'panel' }, h('h3', null, 'Primeiro acesso do gestor'),
+      h('p', null, 'Só uma vez, para ligar o sistema à nuvem da Guardião e criar a conta do gestor.'),
+      h('div', null, h('button', { class: 'btn navy', type: 'button', onclick: () => { view = 'setup'; render(); topo(); } }, 'Configurar o sistema')))
+  ];
+}
+
+function vSetup() {
+  // Etapa 1: criar a conta do gestor
+  if (!sessao || sessao.papel !== 'config') {
+    const v = { email: '', senha: '', conf: '' };
+    const erro = h('p', { style: 'margin:0;color:var(--bad);font-weight:600', hidden: true, role: 'alert' });
+    const btn = h('button', { class: 'btn pri', type: 'submit' }, 'Criar conta do gestor');
+    const enviar = async e => {
+      e.preventDefault(); erro.hidden = true;
+      if (!v.email.trim() || v.senha.length < 6) { erro.textContent = 'Informe o e-mail e uma senha de pelo menos 6 caracteres.'; erro.hidden = false; return; }
+      if (v.senha !== v.conf) { erro.textContent = 'As duas senhas não são iguais.'; erro.hidden = false; return; }
+      btn.disabled = true; btn.textContent = 'Criando…';
+      try {
+        let j;
+        try { j = await authPost('signUp', { email: v.email.trim(), password: v.senha, returnSecureToken: true }); }
+        catch (x) { if (x.codigo === 'EMAIL_EXISTS') j = await authPost('signInWithPassword', { email: v.email.trim(), password: v.senha, returnSecureToken: true }); else throw x; }
+        sessao = Object.assign(novaSessao(j), { papel: 'config' }); gravarSessao(); render(); topo();
+      } catch (x) { btn.disabled = false; btn.textContent = 'Criar conta do gestor'; erro.textContent = msgAuth(x); erro.hidden = false; }
+    };
+    return [
+      h('div', { class: 'head' }, h('div', null, h('h2', null, 'Configurar o sistema'), h('p', null, 'Etapa 1 de 2 · conta do gestor'))),
+      h('div', { class: 'panel' }, h('h3', null, 'Antes, no Firebase'),
+        h('ol', { class: 'passos' },
+          h('li', null, 'Entre em ', h('b', null, 'console.firebase.google.com'), ' e abra o projeto ', h('b', null, FB.projeto), '.'),
+          h('li', null, 'No menu, abra ', h('b', null, 'Authentication'), ' (se pedir, toque em "Vamos começar").'),
+          h('li', null, 'Na aba ', h('b', null, 'Método de login'), ', ative ', h('b', null, 'E-mail/senha'), ' e salve.'))),
+      h('div', { class: 'panel' }, h('h3', null, 'Conta do gestor'),
+        h('form', { class: 'grid', style: 'grid-template-columns:1fr', onsubmit: enviar },
+          campo('E-mail do gestor', inp(v, 'email', { type: 'email', id: 'sEmail', autocomplete: 'username' })),
+          campo('Senha (mínimo 6 caracteres)', inp(v, 'senha', { type: 'password', id: 'sSenha', autocomplete: 'new-password' })),
+          campo('Repita a senha', inp(v, 'conf', { type: 'password', id: 'sConf', autocomplete: 'new-password' })),
+          erro, h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: () => { view = 'login'; render(); } }, 'Voltar'))))
+    ];
+  }
+  // Etapa 2: publicar as regras
+  const regras = regrasFirebase(sessao.email);
+  const area = h('textarea', { class: 'code', id: 'regras', readonly: true }); area.value = regras;
+  const erro = h('p', { style: 'margin:0;color:var(--bad);font-weight:600', hidden: true, role: 'alert' });
+  const btn = h('button', { class: 'btn pri', type: 'button' }, 'Já publiquei, concluir');
+  btn.addEventListener('click', async () => {
+    btn.disabled = true; btn.textContent = 'Testando…'; erro.hidden = true;
+    try {
+      cfg.gestorEmail = sessao.email; cfg.atualizadoEm = Date.now();
+      const c = JSON.parse(JSON.stringify(cfg)); delete c.pendente;
+      await FB.req('PATCH', 'orc_config/principal', { fields: { dados: { stringValue: JSON.stringify(c) }, atualizadoEm: { integerValue: String(cfg.atualizadoEm) } } });
+      cfg.pendente = false; await DB.set('cfg', cfg);
+      sessao.papel = 'gestor'; gravarSessao(); view = 'reps'; render(); topo(); sincronizar(true);
+      aviso('Sistema configurado', 'Agora cadastre os representantes. Cada um vai entrar com o próprio e-mail e senha e verá só os clientes dele.');
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Já publiquei, concluir';
+      erro.textContent = e.status === 403 ? 'A nuvem ainda está bloqueando. Confira se as regras foram coladas e publicadas, espere 1 minuto e tente de novo.' : 'Não consegui falar com a nuvem. Confira a internet.';
+      erro.hidden = false;
+    }
+  });
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Configurar o sistema'), h('p', null, `Etapa 2 de 2 · regras do Firebase para ${sessao.email}`))),
+    h('div', { class: 'panel' }, h('h3', null, 'Como publicar'),
+      h('ol', { class: 'passos' },
+        h('li', null, 'No Firebase, abra ', h('b', null, 'Firestore Database'), ' e a aba ', h('b', null, 'Regras'), '.'),
+        h('li', null, 'Se já existirem linhas começando com ', h('b', null, 'match /orc_'), ' (da versão anterior), apague essas linhas.'),
+        h('li', null, 'Não apague as regras do site. Cole o texto abaixo logo antes das duas últimas chaves ', h('b', null, '}'), ' ', h('b', null, '}'), '.'),
+        h('li', null, 'Toque em ', h('b', null, 'Publicar'), ', volte aqui e toque em "Já publiquei, concluir".'))),
+    h('div', { class: 'panel' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', null, 'Texto das regras'), h('button', { class: 'btn sm navy', type: 'button', onclick: () => copiar(regras, area) }, 'Copiar')), area, erro,
+      h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: () => { sessao = null; gravarSessao(); view = 'login'; render(); } }, 'Cancelar')))
+  ];
+}
+
+// =========================================================
+// 9. Fotos, carimbo e localização
+// =========================================================
+function pegarGPS(ms = 8000) {
+  return new Promise(res => {
+    if (!navigator.geolocation) return res(null);
+    let feito = false; const fim = v => { if (!feito) { feito = true; res(v); } };
+    setTimeout(() => fim(null), ms + 500);
+    try {
+      navigator.geolocation.getCurrentPosition(
+        p => fim({ lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), prec: Math.round(p.coords.accuracy), em: Date.now() }),
+        () => fim(null), { enableHighAccuracy: true, timeout: ms, maximumAge: 60000 });
+    } catch (e) { fim(null); }
+  });
+}
+const linkMapa = g => `https://www.google.com/maps?q=${g.lat},${g.lng}`;
+const textoGPS = g => g ? `${String(g.lat).replace('.', ',')}; ${String(g.lng).replace('.', ',')} (±${g.prec} m)` : '';
+function lerImagem(file, max, tipo, carimbo) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.naturalWidth, hh = img.naturalHeight; const r = Math.min(1, max / Math.max(w, hh));
+        w = Math.round(w * r); hh = Math.round(hh * r);
+        const c = document.createElement('canvas'); c.width = w; c.height = hh;
+        const ctx = c.getContext('2d');
+        if (tipo === 'jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, hh); }
+        ctx.drawImage(img, 0, 0, w, hh);
+        if (carimbo && carimbo.length) {
+          const fs = Math.max(13, Math.round(w / 46)), lh = fs * 1.35, pad = fs * .7, bh = carimbo.length * lh + pad * 2, barra = Math.max(4, fs / 3);
+          ctx.fillStyle = 'rgba(10,10,12,.74)'; ctx.fillRect(0, hh - bh, w, bh);
+          ctx.fillStyle = '#d4af37'; ctx.fillRect(0, hh - bh, barra, bh);
+          ctx.textBaseline = 'top';
+          carimbo.forEach((t, i) => { ctx.font = (i === 0 ? 'bold ' : '') + fs + 'px Arial, sans-serif'; ctx.fillStyle = i === 0 ? '#d4af37' : '#ffffff'; ctx.fillText(t, barra + pad, hh - bh + pad + i * lh, w - barra - pad * 2); });
+        }
+        res({ data: c.toDataURL(tipo === 'png' ? 'image/png' : 'image/jpeg', 0.72), w, h: hh });
+      };
+      img.onerror = () => rej(new Error('img'));
+      img.src = fr.result;
+    };
+    fr.onerror = () => rej(fr.error);
+    fr.readAsDataURL(file);
+  });
+}
+
+// =========================================================
+// 10. Estrutura da tela
+// =========================================================
+const topo = () => window.scrollTo({ top: 0 });
+function exigeGestor() { if (souGestor()) return true; toast('Área restrita ao gestor'); return false; }
+async function abrir(v) {
+  if (['painel', 'reps', 'relatorios', 'empresa'].includes(v) && !exigeGestor()) return;
+  view = v; lev = null; levs = ((await DB.all()) || []).map(migrar); render(); topo();
+  if (v === 'painel' || v === 'inicio') sincronizar(true);
+}
+const abrirPainel = () => { filtro = 'todos'; busca = ''; return abrir('painel'); };
+function render() {
+  const sub = document.getElementById('sub');
+  const nomes = { painel: 'Painel do gestor', reps: 'Representantes', relatorios: 'Relatórios e metas', empresa: 'Minha empresa', setup: 'Configuração', login: cfg.empresa.nome || 'Levantamento e orçamento', conta: 'Minha conta' };
+  sub.textContent = view === 'editor' && lev ? `${lev.numero}${lev.cliente.nome ? ' · ' + lev.cliente.nome : ''}` : nomes[view] || (souRep() ? 'Representante: ' + (sessao.nome || '') : '');
+  const tb = document.getElementById('topbtns');
+  const b = (txt, v, fn) => h('button', { class: 'tbtn' + (view === v ? ' on' : ''), type: 'button', onclick: fn }, txt);
+  tb.replaceChildren(
+    souRep() ? b('Meus clientes', 'inicio', () => abrir('inicio')) : null,
+    souRep() ? b('Minha conta', 'conta', () => { view = 'conta'; render(); }) : null,
+    souGestor() ? b('Painel', 'painel', abrirPainel) : null,
+    souGestor() ? b('Representantes', 'reps', () => abrir('reps')) : null,
+    souGestor() ? b('Relatórios', 'relatorios', () => abrir('relatorios')) : null,
+    souGestor() ? b('Sair', '', sair) : null,
+    sessao && sessao.papel !== 'config' ? h('button', { class: 'tbtn nuvem', id: 'nuvem', type: 'button', onclick: infoNuvem, title: 'Situação da nuvem' }) : null);
+  pintaNuvem();
+  renderSteps();
+  const m = document.getElementById('main'); m.replaceChildren();
+  const telas = { login: vLogin, setup: vSetup, inicio: vInicio, conta: vConta, painel: vPainel, reps: vReps, relatorios: vRelatorios, empresa: vEmpresa };
+  if (view === 'editor') m.append(...[vCliente, vNecessidades, vEstrutura, vFotos, vOrcamento][step]().filter(Boolean));
+  else m.append(...(telas[view] || vLogin)().filter(Boolean));
+  renderBar();
+}
+function renderSteps() {
+  const w = document.getElementById('stepsWrap'); w.replaceChildren();
+  if (view !== 'editor') return;
+  w.append(h('nav', { class: 'steps', 'aria-label': 'Etapas' }, STEPS.map((s, i) =>
+    h('button', { type: 'button', class: 'step' + (i === step ? ' on' : ''), onclick: () => irPara(i) }, h('b', null, i + 1), s))));
+}
+function irPara(i) { step = i; render(); topo(); }
+function sairEditor() { abrir(origem === 'painel' && souGestor() ? 'painel' : souGestor() ? 'painel' : 'inicio'); }
+function renderBar() {
+  const b = document.getElementById('bar'); b.replaceChildren();
+  const grow = (...x) => h('div', { class: 'grow' }, ...x);
+  if (view === 'editor') {
+    const t = totais(lev);
+    b.append(
+      h('button', { class: 'btn', type: 'button', onclick: () => step > 0 ? irPara(step - 1) : sairEditor() }, step > 0 ? 'Voltar' : 'Sair'),
+      grow(h('div', { id: 'barTotal', style: 'color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums' }, `Mensal ${brl(t.tm)}${t.ta ? ' · Avulso ' + brl(t.ta) : ''}`), h('div', { id: 'status' }, 'Salvo automaticamente')),
+      step < 4 ? h('button', { class: 'btn pri', type: 'button', onclick: () => irPara(step + 1) }, 'Próximo')
+               : h('button', { class: 'btn pri', type: 'button', onclick: () => gerarPDF(false) }, 'Gerar PDF'));
+  } else if (view === 'painel') {
+    b.append(h('button', { class: 'btn navy', type: 'button', onclick: () => agendarVisita() }, 'Agendar visita'), grow(), h('button', { class: 'btn pri', type: 'button', onclick: () => novo('painel') }, 'Novo levantamento'));
+  } else if (view === 'reps') {
+    b.append(h('button', { class: 'btn', type: 'button', onclick: abrirPainel }, 'Painel'), grow(), h('button', { class: 'btn pri', type: 'button', onclick: cadastrarRep }, 'Cadastrar representante'));
+  } else if (view === 'relatorios') {
+    b.append(h('button', { class: 'btn', type: 'button', onclick: abrirPainel }, 'Painel'), grow(), h('button', { class: 'btn pri', type: 'button', onclick: exportarExcel }, 'Exportar Excel'));
+  } else if (view === 'empresa') {
+    b.append(grow('As alterações são salvas automaticamente'), h('button', { class: 'btn pri', type: 'button', onclick: abrirPainel }, 'Voltar ao painel'));
+  } else if (view === 'inicio') {
+    b.append(grow(sessao && sessao.nome ? sessao.nome : ''), h('button', { class: 'btn pri', type: 'button', onclick: () => novo('inicio') }, 'Novo levantamento'));
+  } else {
+    b.append(grow(cfg.empresa.nome || ''));
+  }
+}
+function atualizarTotaisBarra() { const el = document.getElementById('barTotal'); if (!el) return; const t = totais(lev); el.textContent = `Mensal ${brl(t.tm)}${t.ta ? ' · Avulso ' + brl(t.ta) : ''}`; }
+function campo(rotulo, el, cls) { return h('label', { class: 'f' + (cls ? ' ' + cls : '') }, rotulo, el); }
+function inp(obj, key, attrs = {}, onChange) {
+  const el = h('input', Object.assign({ type: 'text', value: obj[key] ?? '' }, attrs));
+  el.addEventListener('input', () => { obj[key] = el.value; onChange && onChange(); });
+  return el;
+}
+function txt(obj, key, attrs = {}, onChange) {
+  const el = h('textarea', attrs); el.value = obj[key] || '';
+  el.addEventListener('input', () => { obj[key] = el.value; onChange && onChange(); });
+  return el;
+}
+function abrirLev(l, de) { lev = migrar(l); origem = de; view = 'editor'; step = 0; render(); topo(); }
+async function novo(de) {
+  let repId = '';
+  if (souRep()) repId = sessao.uid;
+  else if (repsAtivos().length) {
+    const v = await formModal('Novo levantamento', 'Quem vai fazer esta visita?', [{ k: 'r', rot: 'Representante', tipo: 'select', opts: opcoesRep('O próprio gestor'), val: filtroRep && filtroRep !== '_sem' ? filtroRep : '' }], 'Começar');
+    if (!v) return; repId = v.r;
+  }
+  lev = novoLev(); lev.repId = repId; lev.repNome = repId ? (souRep() ? sessao.nome : (repPorId(repId) || {}).nome || '') : '';
+  await salvar(true); origem = de; view = 'editor'; step = 0; render(); topo();
+}
+
+// =========================================================
+// 11. Telas do representante
+// =========================================================
+function vInicio() {
+  const visitas = minhas().filter(l => l.status === 'visitar').sort((a, b) => String(a.agenda).localeCompare(String(b.agenda)));
+  const andamento = minhas().filter(l => l.status === 'levantamento').sort((a, b) => b.atualizadoEm - a.atualizadoEm);
+  const feitos = minhas().filter(l => l.status !== 'visitar' && l.status !== 'levantamento').sort((a, b) => b.atualizadoEm - a.atualizadoEm);
+  const cardVisita = l => {
+    const d = l.agenda ? diasAte(l.agenda) : null;
+    return h('div', { class: 'lev s-visitar' },
+      h('div', { class: 'lt1' }, h('b', null, l.cliente.nome || 'Cliente sem nome'), h('span', { class: 'pill p-visitar' }, d === 0 ? 'Hoje' : d === 1 ? 'Amanhã' : d != null && d < 0 ? 'Atrasada' : 'Agendada')),
+      h('div', { class: 'info' }, l.agenda ? fmtDataHora(l.agenda) : 'Sem data marcada'),
+      h('div', { class: 'meta' }, [l.cliente.tipo, l.cliente.endereco, l.cliente.responsavel, l.cliente.telefone].filter(Boolean).join(' · ')),
+      l.cliente.observacoes ? h('div', { class: 'meta' }, 'Recado: ' + l.cliente.observacoes) : null,
+      h('div', { class: 'row' }, h('button', { class: 'btn sm pri', type: 'button', onclick: () => iniciarVisita(l, 'inicio') }, 'Iniciar levantamento'),
+        l.cliente.endereco ? h('a', { class: 'btn sm', href: 'https://www.google.com/maps/search/' + encodeURIComponent(l.cliente.endereco), target: '_blank', rel: 'noopener' }, 'Ver no mapa') : null));
+  };
+  const cardAnd = l => h('div', { class: 'lev' },
+    h('div', { class: 'lt1' }, h('b', null, l.cliente.nome || 'Cliente sem nome'), h('span', { class: 'pill p-levantamento' }, 'Em andamento')),
+    h('div', { class: 'meta' }, h('span', { class: 'num' }, l.numero), ` · ${l.cliente.tipo} · visita ${fmtData(l.cliente.dataVisita)}`),
+    h('div', { class: 'row' }, h('button', { class: 'btn sm navy', type: 'button', onclick: () => abrirLev(l, 'inicio') }, 'Continuar')));
+  const cardFeito = l => {
+    const t = totais(l);
+    return h('div', { class: 'lev s-' + l.status },
+      h('div', { class: 'lt1' }, h('b', null, l.cliente.nome || 'Cliente sem nome'), h('span', { class: 'pill p-' + l.status }, STATUS[l.status])),
+      h('div', { class: 'meta' }, h('span', { class: 'num' }, l.numero), ` · visita ${fmtData(l.cliente.dataVisita)} · mensal ${brl(l.status === 'fechado' ? valorFechado(l) : t.tm)}`),
+      ABERTO(l.status) ? h('div', { class: 'info' }, textoValidade(l)) : null,
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm navy', type: 'button', onclick: () => abrirLev(l, 'inicio') }, 'Ver'),
+        t.its.length ? h('button', { class: 'btn sm', type: 'button', onclick: () => { lev = l; gerarPDF(false); } }, 'PDF') : null));
+  };
+  const eu = reps[0] || {};
+  const mes = hojeISO().slice(0, 7);
+  const fechMes = feitos.filter(l => l.status === 'fechado' && mesDe(l.contrato.assinatura) === mes);
+  const valorMes = fechMes.reduce((s, l) => s + valorFechado(l), 0);
+  const meta = num(eu.meta);
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Meus clientes'), h('p', null, `Olá, ${(sessao.nome || '').split(' ')[0]}. Aqui aparecem só as visitas e os clientes que são seus.`))),
+    meta || num(eu.comissao) ? h('div', { class: 'tiles' },
+      h('div', { class: 'tile t-ok' }, h('small', null, 'Fechado este mês'), h('b', null, brl(valorMes)), h('span', null, `${fechMes.length} contrato(s)`)),
+      meta ? h('div', { class: 'tile' }, h('small', null, 'Minha meta do mês'), h('b', null, Math.round(valorMes / meta * 100) + '%'), h('div', { class: 'prog' }, h('i', { class: valorMes >= meta ? 'ok' : '', style: `width:${Math.min(100, valorMes / meta * 100)}%` })), h('span', null, 'meta ' + brl(meta))) : null,
+      num(eu.comissao) ? h('div', { class: 'tile' }, h('small', null, 'Comissão do mês'), h('b', null, brl(valorMes * num(eu.comissao) / 100)), h('span', null, `${fmtNum(eu.comissao)}% sobre o fechado`)) : null) : null,
+    h('div', { class: 'cat' }, h('h3', null, `Visitas agendadas (${visitas.length})`),
+      visitas.length ? visitas.map(cardVisita) : h('div', { class: 'empty' }, h('strong', null, 'Nenhuma visita agendada'), 'O gestor marca as visitas pelo painel. Você também pode começar um levantamento direto.')),
+    h('div', { class: 'cat' }, h('h3', null, `Em andamento (${andamento.length})`),
+      andamento.length ? andamento.map(cardAnd) : h('div', { class: 'empty' }, h('strong', null, 'Nada em andamento'), 'Toque em "Novo levantamento" para visitar um cliente, marcar o que ele precisa, fotografar o local e gerar o orçamento.')),
+    h('div', { class: 'cat' }, h('h3', null, `Orçamentos e contratos (${feitos.length})`),
+      feitos.length ? feitos.map(cardFeito) : h('div', { class: 'empty' }, h('strong', null, 'Nenhum orçamento enviado ainda'), 'Quando você gerar o PDF de um levantamento, ele aparece aqui com a situação atualizada pelo gestor.'))
+  ];
+}
+function vConta() {
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Minha conta'), h('p', null, sessao.email))),
+    h('div', { class: 'panel' }, h('h3', null, 'Senha'), h('p', null, 'Troque a senha que o gestor criou para você.'), h('div', null, h('button', { class: 'btn navy', type: 'button', onclick: trocarMinhaSenha }, 'Trocar minha senha'))),
+    h('div', { class: 'panel' }, h('h3', null, 'Sair'), h('p', null, 'Use quando for devolver ou trocar de celular.'), h('div', null, h('button', { class: 'btn danger', type: 'button', onclick: sair }, 'Sair deste aparelho')))
+  ];
+}
+async function iniciarVisita(l, de) {
+  migrar(l); l.status = 'levantamento'; l.cliente.dataVisita = hojeISO();
+  l.historico.push({ em: Date.now(), status: 'levantamento', nota: 'Visita realizada, levantamento iniciado' });
+  await gravar(l); abrirLev(l, de);
+  pegarGPS().then(g => { if (g && !l.gps) { l.gps = g; gravar(l); if (lev === l && view === 'editor' && step === 0) render(); } });
+}
+
+// =========================================================
+// 12. Painel do gestor
+// =========================================================
+function vPainel() {
+  const L = ativos().filter(l => !filtroRep || (filtroRep === '_sem' ? !l.repId || !repPorId(l.repId) : l.repId === filtroRep));
+  const visitar = L.filter(l => l.status === 'visitar');
+  const abertos = L.filter(l => ABERTO(l.status));
+  const vencendo = abertos.filter(l => { const v = validade(l); return v && v.falta <= 3; });
+  const fechados = L.filter(l => l.status === 'fechado');
+  const perdidos = L.filter(l => l.status === 'perdido');
+  const renovar = fechados.filter(l => { const c = contratoInfo(l); return c && c.falta != null && c.falta <= 30; });
+  const somaAbertos = abertos.reduce((s, l) => s + totais(l).tm, 0);
+  const somaFechados = fechados.reduce((s, l) => s + valorFechado(l), 0);
+  const taxa = fechados.length + perdidos.length ? Math.round(fechados.length / (fechados.length + perdidos.length) * 100) : null;
+  const tile = (cls, rot, n, sub, f) => h('button', { type: 'button', class: 'tile ' + cls, onclick: () => { filtro = f; render(); } }, h('small', null, rot), h('b', null, n), h('span', null, sub));
+  const FILTROS = [
+    ['todos', 'Todos', L.length], ['visitar', 'A visitar', visitar.length], ['levantamento', 'Em levantamento', L.filter(l => l.status === 'levantamento').length],
+    ['abertos', 'Contratos em aberto', abertos.length], ['vencendo', 'Validade vencendo/vencida', vencendo.length],
+    ['fechado', 'Contratos fechados', fechados.length], ['renovar', 'Renovar em 30 dias', renovar.length], ['perdido', 'Não fechados', perdidos.length]
+  ];
+  const passa = l => {
+    if (filtro === 'abertos' && !ABERTO(l.status)) return false;
+    if (filtro === 'vencendo' && !vencendo.includes(l)) return false;
+    if (filtro === 'renovar' && !renovar.includes(l)) return false;
+    if (['visitar', 'levantamento', 'fechado', 'perdido'].includes(filtro) && l.status !== filtro) return false;
+    if (busca) { const q = busca.toLowerCase(); if (!(`${l.cliente.nome} ${l.numero} ${l.cliente.responsavel} ${l.cliente.endereco} ${nomeRep(l)}`.toLowerCase().includes(q))) return false; }
+    return true;
+  };
+  const ordem = { visitar: 0, negociacao: 1, enviado: 2, levantamento: 3, fechado: 4, perdido: 5 };
+  const buscaEl = h('input', { type: 'search', id: 'busca', placeholder: 'Buscar cliente, número, endereço, representante…', value: busca });
+  buscaEl.addEventListener('input', () => { busca = buscaEl.value; pintaLista(); });
+  const selRep = h('select', { id: 'filtroRep', 'aria-label': 'Representante' },
+    h('option', { value: '' }, 'Todos os representantes'), reps.map(r => h('option', { value: r.uid, selected: r.uid === filtroRep }, r.nome + (r.ativo === false ? ' (desativado)' : ''))),
+    h('option', { value: '_sem', selected: filtroRep === '_sem' }, 'Sem representante'));
+  selRep.addEventListener('change', () => { filtroRep = selRep.value; render(); });
+  const caixa = h('div', { class: 'cat' });
+  const pintaLista = () => {
+    const ls = L.filter(passa).sort((a, b) => (ordem[a.status] - ordem[b.status]) || (a.status === 'visitar' ? String(a.agenda).localeCompare(String(b.agenda)) : b.atualizadoEm - a.atualizadoEm));
+    caixa.replaceChildren(...(ls.length ? ls.map(cardGestor) : [h('div', { class: 'empty' }, h('strong', null, L.length ? 'Nada neste filtro' : 'Nenhum orçamento ainda'), L.length ? 'Escolha outro filtro ou limpe a busca.' : 'Use "Agendar visita" para mandar um representante a um cliente, ou "Novo levantamento" para começar agora.')]));
+  };
+  pintaLista();
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Painel do gestor'), h('p', null, 'Situação de cada cliente, validade das propostas e contratos fechados.')),
+      h('div', { class: 'row' }, h('button', { class: 'btn sm', type: 'button', onclick: infoNuvem }, 'Sincronizar agora'), h('button', { class: 'btn sm', type: 'button', onclick: () => abrir('empresa') }, 'Minha empresa e preços'))),
+    h('div', { class: 'tiles' },
+      tile('t-info', 'Clientes a visitar', visitar.length, visitar.length ? 'próxima: ' + (fmtDataHora([...visitar].sort((a, b) => String(a.agenda).localeCompare(String(b.agenda)))[0].agenda) || 'sem data') : 'nenhuma agendada', 'visitar'),
+      tile('t-warn', 'Contratos em aberto', abertos.length, brl(somaAbertos) + '/mês em proposta', 'abertos'),
+      tile(vencendo.length ? 't-bad' : '', 'Validade vencendo', vencendo.length, 'vencidas ou até 3 dias', 'vencendo'),
+      tile('t-ok', 'Contratos fechados', fechados.length, brl(somaFechados) + '/mês contratado', 'fechado'),
+      tile('', 'Taxa de fechamento', taxa == null ? '—' : taxa + '%', `${fechados.length} fechados · ${perdidos.length} perdidos`, 'todos')),
+    h('div', { class: 'panel', style: 'gap:10px' }, h('div', { class: 'grid' }, selRep, buscaEl),
+      h('div', { class: 'chips', role: 'tablist' }, FILTROS.map(([k, t, n]) => h('button', { type: 'button', class: 'chipb' + (filtro === k ? ' on' : ''), role: 'tab', 'aria-selected': filtro === k, onclick: () => { filtro = k; render(); } }, `${t} (${n})`)))),
+    caixa,
+    h('div', { class: 'panel' }, h('h3', null, 'Cópia de segurança'),
+      h('p', null, 'Os orçamentos ficam na nuvem da Guardião e também numa cópia neste aparelho. O backup é uma garantia extra: baixe de vez em quando e guarde no computador.'),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn', type: 'button', onclick: exportar }, 'Baixar backup'),
+        h('label', { class: 'btn', for: 'impFile' }, 'Restaurar backup'),
+        h('input', { type: 'file', id: 'impFile', accept: '.json,application/json', hidden: true, onchange: e => importar(e.target.files[0]) })))
+  ];
+}
+function cardGestor(l) {
+  const t = totais(l), c = l.cliente, info = [];
+  if (l.status === 'visitar') {
+    info.push(h('div', { class: 'info' }, 'Visita: ', l.agenda ? h('b', null, fmtDataHora(l.agenda)) : 'sem data', l.agenda && diasAte(l.agenda) < 0 ? h('span', { class: 'alerta' }, ' · atrasada') : null));
+    info.push(h('div', { class: 'meta' }, [c.endereco, c.responsavel, c.telefone].filter(Boolean).join(' · ')));
+  } else {
+    info.push(h('div', { class: 'info' }, `Mensal ${brl(t.tm)}${t.ta ? ' · Avulso ' + brl(t.ta) : ''}`, l.assinatura ? h('span', { class: 'bom' }, ' · assinado pelo cliente') : null, l.gps ? ' · ' : null, l.gps ? h('a', { href: linkMapa(l.gps), target: '_blank', rel: 'noopener' }, 'local da visita') : null));
+    if (ABERTO(l.status)) info.push(h('div', { class: 'info' }, textoValidade(l) || h('span', { class: 'atencao' }, 'PDF ainda não gerado')));
+    if (l.status === 'fechado') {
+      const ci = contratoInfo(l), k = l.contrato;
+      info.push(h('div', { class: 'info' }, h('span', { class: 'bom' }, `Contrato ${brl(valorFechado(l))}/mês`), k.assinatura ? ` · assinado em ${fmtData(k.assinatura)}` : '', k.inicio ? ` · início ${fmtData(k.inicio)}` : ''));
+      if (ci && ci.fim) info.push(h('div', { class: 'info' }, `Vigência de ${k.meses} meses, até ${fmtData(ci.fim)} · `,
+        ci.falta < 0 ? h('span', { class: 'alerta' }, `vencido há ${-ci.falta} dia(s)`) : ci.falta <= 30 ? h('span', { class: 'atencao' }, `renovar em ${ci.falta} dia(s)`) : `${ci.falta} dias para o fim`));
+    }
+    if (l.status === 'perdido' && l.motivo) info.push(h('div', { class: 'meta' }, 'Motivo: ' + l.motivo));
+  }
+  const hist = l.historico.length ? h('details', null, h('summary', null, `Histórico (${l.historico.length})`),
+    h('ul', null, [...l.historico].reverse().map(x => h('li', null, `${fmtMomento(x.em)} — ${STATUS[x.status] || x.status}${x.nota ? ': ' + x.nota : ''}`)))) : null;
+  return h('div', { class: 'lev s-' + l.status },
+    h('div', { class: 'lt1' }, h('b', null, c.nome || 'Cliente sem nome'), h('span', { class: 'pill p-' + l.status }, STATUS[l.status])),
+    h('div', { class: 'meta' }, h('span', { class: 'num' }, l.numero), ` · ${c.tipo}${l.status !== 'visitar' ? ' · visita ' + fmtData(c.dataVisita) : ''} · `,
+      nomeRep(l) ? h('b', { style: 'color:var(--accent);font-weight:600' }, nomeRep(l)) : 'sem representante'),
+    info, hist,
+    h('div', { class: 'row' },
+      l.status === 'visitar' ? h('button', { class: 'btn sm pri', type: 'button', onclick: () => iniciarVisita(l, 'painel') }, 'Iniciar levantamento')
+        : h('button', { class: 'btn sm navy', type: 'button', onclick: () => abrirLev(l, 'painel') }, 'Abrir'),
+      h('button', { class: 'btn sm pri', type: 'button', onclick: () => mudarSituacao(l) }, 'Mudar situação'),
+      t.its.length ? h('button', { class: 'btn sm', type: 'button', onclick: () => { lev = l; gerarPDF(false); } }, 'Orçamento PDF') : null,
+      l.status === 'fechado' ? h('button', { class: 'btn sm navy', type: 'button', onclick: () => gerarContrato(l) }, 'Contrato PDF') : null,
+      h('button', { class: 'btn sm', type: 'button', onclick: () => trocarRep(l) }, 'Representante'),
+      h('button', { class: 'btn sm', type: 'button', onclick: () => duplicar(l) }, 'Duplicar'),
+      h('button', { class: 'btn sm danger', type: 'button', onclick: () => excluir(l) }, 'Excluir')));
+}
+async function agendarVisita(repInicial) {
+  const v = await formModal('Agendar visita', 'O representante verá esta visita na tela dele.', [
+    { k: 'rep', rot: 'Representante que fará a visita', tipo: 'select', opts: opcoesRep(), val: repInicial || (filtroRep && filtroRep !== '_sem' ? filtroRep : (repsAtivos()[0] || {}).uid || '') },
+    { k: 'nome', rot: 'Cliente / condomínio / empresa', req: true },
+    { k: 'tipo', rot: 'Tipo de local', tipo: 'select', opts: TIPOS_CLIENTE, val: TIPOS_CLIENTE[0] },
+    { k: 'agenda', rot: 'Data e hora da visita', tipo: 'datetime-local', req: true },
+    { k: 'responsavel', rot: 'Responsável' },
+    { k: 'telefone', rot: 'Telefone / WhatsApp', tipo: 'tel' },
+    { k: 'endereco', rot: 'Endereço' },
+    { k: 'obs', rot: 'Recado para o representante', tipo: 'textarea', ph: 'O que o cliente pediu ao telefone, ponto de referência…' }
+  ], 'Agendar');
+  if (!v) return false;
+  const l = novoLev();
+  l.status = 'visitar'; l.agenda = v.agenda; l.repId = v.rep; l.repNome = v.rep ? (repPorId(v.rep) || {}).nome || '' : '';
+  Object.assign(l.cliente, { nome: v.nome.trim(), tipo: v.tipo, responsavel: v.responsavel, telefone: v.telefone, endereco: v.endereco, observacoes: v.obs, dataVisita: v.agenda.slice(0, 10) });
+  l.historico = [{ em: Date.now(), status: 'visitar', nota: 'Visita agendada para ' + fmtDataHora(v.agenda) + (l.repNome ? ' com ' + l.repNome : '') }];
+  await gravar(l); toast('Visita agendada'); render(); return true;
+}
+async function mudarSituacao(l) {
+  const ops = Object.keys(STATUS).map(k => ({ t: STATUS[k] + (k === 'enviado' ? ' (conta a validade a partir de hoje)' : '') + (k === l.status ? '  ✓ atual' : ''), v: k, cls: k === l.status ? 'navy' : '' }));
+  const s = await modal('Mudar situação', `${l.numero} — ${l.cliente.nome || 'sem nome'}`, [...ops, { t: 'Cancelar', v: false }], true);
+  if (!s) return;
+  let nota = '';
+  if (s === 'visitar') {
+    const v = await formModal('Data da visita', null, [{ k: 'agenda', rot: 'Data e hora', tipo: 'datetime-local', val: l.agenda || '', req: true }], 'Salvar');
+    if (!v) return; l.agenda = v.agenda; nota = 'Visita marcada para ' + fmtDataHora(v.agenda);
+  } else if (s === 'enviado') {
+    const v = await formModal('Orçamento enviado', 'A validade passa a contar a partir de hoje.', [{ k: 'dias', rot: 'Validade (dias)', tipo: 'number', val: l.orc.validade || 15, req: true, im: 'numeric' }], 'Salvar');
+    if (!v) return; l.orc.validade = num(v.dias) || 15; l.emitidoEm = Date.now(); nota = `Validade de ${l.orc.validade} dias`;
+  } else if (s === 'negociacao') {
+    const v = await formModal('Em negociação', null, [{ k: 'n', rot: 'Anotação (opcional)', tipo: 'textarea', ph: 'Ex.: cliente pediu desconto de 5%' }], 'Salvar');
+    if (!v) return; nota = v.n.trim();
+  } else if (s === 'fechado') {
+    const v = await formContrato(l, 'Contrato fechado');
+    if (!v) return;
+    nota = `${brl(l.contrato.valor)}/mês, início ${fmtData(l.contrato.inicio)}${l.contrato.meses ? ', ' + l.contrato.meses + ' meses' : ''}`;
+  } else if (s === 'perdido') {
+    const v = await formModal('Não fechado', null, [{ k: 'motivo', rot: 'Motivo', tipo: 'select', opts: MOTIVOS_PERDA, val: MOTIVOS_PERDA[0] }, { k: 'det', rot: 'Detalhe (opcional)', tipo: 'textarea' }], 'Salvar');
+    if (!v) return; l.motivo = v.motivo + (v.det.trim() ? ' — ' + v.det.trim() : ''); l.motivoTipo = v.motivo; nota = l.motivo;
+  }
+  l.status = s; l.historico.push({ em: Date.now(), status: s, nota });
+  await gravar(l); toast('Situação atualizada: ' + STATUS[s]); render();
+  if (s === 'fechado' && await confirma('Gerar o contrato agora?', 'O contrato de prestação de serviços sai em PDF com os dados do cliente e os serviços contratados.', 'Gerar contrato')) gerarContrato(l, true);
+}
+async function formContrato(l, titulo) {
+  const k = l.contrato;
+  const v = await formModal(titulo, 'Esses dados vão para o contrato.', [
+    { k: 'valor', rot: 'Valor mensal fechado (R$)', val: fmtNum(valorFechado(l)), im: 'decimal', req: true },
+    { k: 'assinatura', rot: 'Data da assinatura', tipo: 'date', val: k.assinatura || hojeISO(), req: true },
+    { k: 'inicio', rot: 'Início do serviço', tipo: 'date', val: k.inicio || hojeISO(), req: true },
+    { k: 'meses', rot: 'Vigência (meses)', tipo: 'number', val: k.meses || 12, im: 'numeric' },
+    { k: 'vencimento', rot: 'Dia de vencimento do pagamento', tipo: 'number', val: k.vencimento || 10, im: 'numeric' },
+    { k: 'doc', rot: 'CPF ou CNPJ do contratante', val: k.doc || '', im: 'numeric' },
+    { k: 'repLegal', rot: 'Quem assina pelo contratante', val: k.repLegal || l.cliente.responsavel || '' },
+    { k: 'endereco', rot: 'Endereço onde o serviço será prestado', val: k.endereco || l.cliente.endereco || '' },
+    { k: 'obs', rot: 'Observação interna', tipo: 'textarea', val: k.obs || '' }
+  ], 'Salvar');
+  if (!v) return null;
+  l.contrato = { valor: num(v.valor), assinatura: v.assinatura, inicio: v.inicio, meses: num(v.meses), vencimento: Math.min(31, Math.max(1, num(v.vencimento) || 10)), doc: v.doc.trim(), repLegal: v.repLegal.trim(), endereco: v.endereco.trim(), obs: v.obs };
+  return v;
+}
+async function trocarRep(l) {
+  const v = await formModal('Representante do cliente', `${l.cliente.nome || l.numero}\nSó o representante escolhido verá este cliente.`, [{ k: 'r', rot: 'Representante', tipo: 'select', opts: opcoesRep(), val: l.repId }], 'Salvar');
+  if (!v || v.r === l.repId) return;
+  if (l.fotos.some(f => !f.data)) { toast('Buscando fotos na nuvem…'); await garantirFotos(l); }
+  l.repId = v.r; l.repNome = v.r ? (repPorId(v.r) || {}).nome || '' : '';
+  l.fotos.forEach(f => { if (f.data) f.nuvem = false; });
+  l.historico.push({ em: Date.now(), status: l.status, nota: v.r ? 'Passado para ' + l.repNome : 'Retirado do representante' });
+  await gravar(l); toast('Representante atualizado'); render();
+}
+async function duplicar(l) {
+  if (l.fotos.some(f => !f.data)) await garantirFotos(l);
+  const c = migrar(JSON.parse(JSON.stringify(l))); const n = novoLev();
+  Object.assign(c, { id: n.id, numero: n.numero, criadoEm: Date.now(), status: 'levantamento', emitidoEm: null, contrato: {}, motivo: '', agenda: '', assinatura: null,
+    historico: [{ em: Date.now(), status: 'levantamento', nota: 'Cópia de ' + l.numero }] });
+  c.fotos = c.fotos.filter(f => f.data).map(f => ({ ...f, id: uid(), nuvem: false }));
+  c.cliente.dataVisita = hojeISO();
+  await gravar(c); toast('Duplicado como ' + c.numero); render();
+}
+async function excluir(l) {
+  if (!await confirma('Excluir orçamento?', `${l.numero} — ${l.cliente.nome || 'sem nome'}\nApaga também as fotos e o histórico. Não dá para desfazer.`, 'Excluir', 'danger')) return;
+  l.excluido = true; l.fotos.forEach(f => { delete f.data; });
+  await gravar(l); toast('Orçamento excluído'); render();
+}
+function baixar(blob, nome) {
+  const a = h('a', { href: URL.createObjectURL(blob), download: nome }); document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function exportar() {
+  const dados = { app: 'orcamento-de-campo', versao: 3, exportadoEm: new Date().toISOString(), cfg, reps, levs };
+  baixar(new Blob([JSON.stringify(dados)], { type: 'application/json' }), `backup_orcamentos_${hojeISO()}.json`);
+}
+async function importar(file) {
+  if (!file) return;
+  try {
+    const d = JSON.parse(await file.text());
+    if (d.app !== 'orcamento-de-campo' || !Array.isArray(d.levs)) throw new Error('formato');
+    if (!await confirma('Restaurar backup?', `O arquivo tem ${d.levs.length} orçamento(s). Os que já existem aqui serão atualizados pela versão mais recente, e tudo será enviado para a nuvem.`, 'Restaurar')) return;
+    let n = 0;
+    for (const l of d.levs) {
+      const atual = levs.find(x => x.id === l.id);
+      if (!atual || (l.atualizadoEm || 0) >= (atual.atualizadoEm || 0)) { const x = migrar(l); x.pendente = true; x.fotos.forEach(f => { f.nuvem = false; }); await DB.put(x); n++; }
+    }
+    toast(`${n} orçamento(s) restaurado(s)`); abrirPainel();
+  } catch (e) { aviso('Arquivo não reconhecido', 'Escolha um arquivo de backup gerado por este sistema.'); }
+}
+
+// =========================================================
+// 13. Representantes (gestor)
+// =========================================================
+function numerosRep(ls, mes) {
+  const visitas = ls.filter(l => l.status === 'visitar');
+  const abertos = ls.filter(l => ABERTO(l.status));
+  const fechados = ls.filter(l => l.status === 'fechado');
+  const perdidos = ls.filter(l => l.status === 'perdido');
+  const fechMes = mes ? fechados.filter(l => mesDe(l.contrato.assinatura) === mes) : [];
+  return {
+    visitas: visitas.length, atrasadas: visitas.filter(l => l.agenda && diasAte(l.agenda) < 0).length,
+    levant: ls.filter(l => l.status === 'levantamento').length, enviados: ls.filter(l => l.emitidoEm).length,
+    enviadosMes: mes ? ls.filter(l => l.emitidoEm && mesDe(l.emitidoEm) === mes).length : 0,
+    abertos: abertos.length, somaAbertos: abertos.reduce((s, l) => s + totais(l).tm, 0),
+    fechados: fechados.length, somaFechados: fechados.reduce((s, l) => s + valorFechado(l), 0),
+    fechMes: fechMes.length, valorMes: fechMes.reduce((s, l) => s + valorFechado(l), 0),
+    perdidos: perdidos.length,
+    taxa: fechados.length + perdidos.length ? Math.round(fechados.length / (fechados.length + perdidos.length) * 100) : null,
+    ultima: ls.reduce((m, l) => Math.max(m, l.atualizadoEm || 0), 0)
+  };
+}
+function vReps() {
+  const lista = [...reps].sort((a, b) => (a.ativo === false) - (b.ativo === false) || String(a.nome).localeCompare(String(b.nome)));
+  const L = ativos();
+  const linhas = lista.map(r => ({ r, n: numerosRep(L.filter(l => l.repId === r.uid)) }));
+  const semRep = numerosRep(L.filter(l => !l.repId || !repPorId(l.repId)));
+  const verClientes = id => { filtroRep = id; filtro = 'todos'; busca = ''; view = 'painel'; render(); topo(); };
+  const cartao = ({ r, n }) => {
+    const ativo = r.ativo !== false;
+    const stat = (rot, v, sub, cls) => h('div', { class: 'tile ' + (cls || '') }, h('small', null, rot), h('b', { style: 'font-size:1.7rem' }, v), sub ? h('span', null, sub) : null);
+    return h('div', { class: 'lev s-rep', style: ativo ? '' : 'opacity:.65' },
+      h('div', { class: 'lt1' }, h('b', null, r.nome), h('span', { class: 'pill ' + (ativo ? 'p-fechado' : 'p-perdido') }, ativo ? 'Ativo' : 'Desativado')),
+      h('div', { class: 'meta' }, [r.email, r.telefone, n.ultima ? 'última atividade ' + new Date(n.ultima).toLocaleDateString('pt-BR') : 'sem atividade ainda'].filter(Boolean).join(' · ')),
+      num(r.meta) || num(r.comissao) ? h('div', { class: 'meta' }, [num(r.meta) ? 'meta ' + brl(r.meta) + '/mês' : '', num(r.comissao) ? 'comissão ' + fmtNum(r.comissao) + '%' : ''].filter(Boolean).join(' · ')) : null,
+      h('div', { class: 'tiles', style: 'grid-template-columns:repeat(auto-fit,minmax(120px,1fr))' },
+        stat('A visitar', n.visitas, n.atrasadas ? n.atrasadas + ' atrasada(s)' : '', n.atrasadas ? 't-bad' : 't-info'),
+        stat('Em levantamento', n.levant, ''),
+        stat('Em aberto', n.abertos, brl(n.somaAbertos) + '/mês', 't-warn'),
+        stat('Fechados', n.fechados, brl(n.somaFechados) + '/mês', 't-ok'),
+        stat('Não fechados', n.perdidos, n.taxa == null ? '' : 'taxa ' + n.taxa + '%', n.perdidos ? 't-bad' : '')),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm navy', type: 'button', onclick: () => verClientes(r.uid) }, 'Ver clientes'),
+        ativo ? h('button', { class: 'btn sm pri', type: 'button', onclick: async () => { if (await agendarVisita(r.uid)) { view = 'reps'; render(); } } }, 'Agendar visita') : null,
+        h('button', { class: 'btn sm', type: 'button', onclick: () => editarRep(r) }, 'Editar e metas'),
+        h('button', { class: 'btn sm', type: 'button', onclick: () => esqueciSenha(r.email) }, 'Enviar link de nova senha'),
+        h('button', { class: 'btn sm ' + (ativo ? 'danger' : ''), type: 'button', onclick: () => alternarRep(r, n) }, ativo ? 'Desativar' : 'Reativar')));
+  };
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Representantes'), h('p', null, 'Quem visita os clientes, o que cada um tem em andamento e quanto já fechou.'))),
+    lista.length ? null : h('div', { class: 'empty' }, h('strong', null, 'Nenhum representante cadastrado'), 'Toque em "Cadastrar representante". Cada um entra com o próprio e-mail e senha e só vê os clientes dele.'),
+    h('div', { class: 'cat' }, linhas.map(cartao)),
+    semRep.visitas + semRep.levant + semRep.enviados ? h('div', { class: 'panel' }, h('h3', null, 'Clientes sem representante'),
+      h('p', null, `${semRep.visitas} a visitar, ${semRep.levant} em levantamento, ${semRep.abertos} em aberto, ${semRep.fechados} fechados. Nenhum representante vê estes clientes.`),
+      h('div', null, h('button', { class: 'btn sm navy', type: 'button', onclick: () => verClientes('_sem') }, 'Ver e distribuir'))) : null
+  ];
+}
+const docRep = r => ({ fields: paraCampos({ nome: r.nome, email: r.email || '', telefone: r.telefone || '', ativo: r.ativo !== false, meta: num(r.meta), comissao: num(r.comissao), criadoEm: r.criadoEm || Date.now() }) });
+async function cadastrarRep() {
+  await formModal('Cadastrar representante', 'O representante entra com este e-mail e a senha inicial. Depois ele pode trocar a senha.', [
+    { k: 'nome', rot: 'Nome', req: true },
+    { k: 'email', rot: 'E-mail', tipo: 'email', req: true },
+    { k: 'telefone', rot: 'Telefone / WhatsApp', tipo: 'tel' },
+    { k: 'senha', rot: 'Senha inicial (mínimo 6 caracteres)', tipo: 'password', req: true },
+    { k: 'meta', rot: 'Meta mensal em contratos fechados (R$)', im: 'decimal', ph: 'Opcional' },
+    { k: 'comissao', rot: 'Comissão sobre o valor mensal fechado (%)', im: 'decimal', ph: 'Opcional' }
+  ], 'Cadastrar', v => v.senha.length < 6 ? 'A senha precisa ter pelo menos 6 caracteres.' : null,
+  async v => {
+    try {
+      const j = await authPost('signUp', { email: v.email.trim(), password: v.senha, returnSecureToken: true });
+      const r = { uid: j.localId, nome: v.nome.trim(), email: v.email.trim().toLowerCase(), telefone: v.telefone.trim(), ativo: true, meta: num(v.meta), comissao: num(v.comissao), criadoEm: Date.now() };
+      await FB.req('PATCH', 'orc_reps/' + r.uid, docRep(r));
+      reps.push(r); await DB.set('reps', reps); toast('Representante cadastrado'); render(); return null;
+    } catch (e) {
+      if (e.codigo === 'EMAIL_EXISTS') return 'Este e-mail já tem conta. Se for um representante desativado, use "Reativar" no cartão dele.';
+      return e.status ? 'A conta foi criada, mas a nuvem recusou o cadastro (' + e.status + '). Confira as regras do Firebase.' : msgAuth(e);
+    }
+  });
+}
+async function editarRep(r) {
+  await formModal('Editar representante', r.email, [
+    { k: 'nome', rot: 'Nome', val: r.nome, req: true },
+    { k: 'telefone', rot: 'Telefone / WhatsApp', tipo: 'tel', val: r.telefone || '' },
+    { k: 'meta', rot: 'Meta mensal em contratos fechados (R$)', val: num(r.meta) ? fmtNum(r.meta) : '', im: 'decimal' },
+    { k: 'comissao', rot: 'Comissão sobre o valor mensal fechado (%)', val: num(r.comissao) ? fmtNum(r.comissao) : '', im: 'decimal' }
+  ], 'Salvar', null, async v => {
+    const novo = Object.assign({}, r, { nome: v.nome.trim(), telefone: v.telefone.trim(), meta: num(v.meta), comissao: num(v.comissao) });
+    try { await FB.req('PATCH', 'orc_reps/' + r.uid, docRep(novo)); Object.assign(r, novo); await DB.set('reps', reps); toast('Dados atualizados'); render(); return null; }
+    catch (e) { return e.status ? 'A nuvem recusou (' + e.status + ').' : 'Sem conexão. Tente de novo com internet.'; }
+  });
+}
+async function alternarRep(r, n) {
+  const ativar = r.ativo === false;
+  if (!ativar) {
+    const pend = n.visitas + n.levant + n.abertos;
+    if (!await confirma('Desativar representante?', `${r.nome} não vai mais conseguir entrar nem ver clientes.${pend ? `\nEle ainda tem ${pend} cliente(s) em andamento. Use "Ver clientes" e o botão "Representante" para passar para outra pessoa.` : ''}`, 'Desativar', 'danger')) return;
+  }
+  try { await FB.req('PATCH', 'orc_reps/' + r.uid, docRep(Object.assign({}, r, { ativo: ativar }))); r.ativo = ativar; await DB.set('reps', reps); toast(ativar ? 'Representante reativado' : 'Representante desativado'); render(); }
+  catch (e) { aviso('Não foi possível', e.status ? 'A nuvem recusou (' + e.status + ').' : 'Sem conexão. Tente de novo com internet.'); }
+}
+
+// =========================================================
+// 14. Relatórios, metas e Excel (gestor)
+// =========================================================
+function vRelatorios() {
+  const L = ativos();
+  const selMes = h('input', { type: 'month', id: 'mesRel', value: mesRel });
+  selMes.addEventListener('change', () => { if (selMes.value) { mesRel = selMes.value; render(); } });
+  const doMes = {
+    visitas: L.filter(l => mesDe(l.cliente.dataVisita) === mesRel && l.status !== 'visitar'),
+    enviados: L.filter(l => l.emitidoEm && mesDe(l.emitidoEm) === mesRel),
+    fechados: L.filter(l => l.status === 'fechado' && mesDe(l.contrato.assinatura) === mesRel),
+    perdidos: L.filter(l => l.status === 'perdido' && l.historico.some(x => x.status === 'perdido' && mesDe(x.em) === mesRel))
+  };
+  const valorMes = doMes.fechados.reduce((s, l) => s + valorFechado(l), 0);
+  const avulsoMes = doMes.fechados.reduce((s, l) => s + totais(l).ta, 0);
+  const taxaMes = doMes.fechados.length + doMes.perdidos.length ? Math.round(doMes.fechados.length / (doMes.fechados.length + doMes.perdidos.length) * 100) : null;
+  const carteira = L.filter(l => l.status === 'fechado' && (() => { const c = contratoInfo(l); return !c || c.falta == null || c.falta >= 0; })()).reduce((s, l) => s + valorFechado(l), 0);
+
+  // 12 meses até o mês escolhido
+  const meses = []; { const [a, m] = mesRel.split('-').map(Number); for (let i = 11; i >= 0; i--) { const d = new Date(a, m - 1 - i, 1); meses.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`); } }
+  const serie = meses.map(ym => ({ ym, v: L.filter(l => l.status === 'fechado' && mesDe(l.contrato.assinatura) === ym).reduce((s, l) => s + valorFechado(l), 0), n: L.filter(l => l.emitidoEm && mesDe(l.emitidoEm) === ym).length }));
+  const W = 640, H = 220, pl = 8, pr = 8, pt = 22, pb = 34, max = Math.max(1, ...serie.map(s => s.v));
+  const bw = (W - pl - pr) / serie.length;
+  const grafico = svg('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Valor mensal fechado por mês' },
+    svg('line', { x1: pl, x2: W - pr, y1: H - pb, y2: H - pb }),
+    serie.map((s, i) => {
+      const hh = (H - pt - pb) * s.v / max, x = pl + i * bw + bw * .18, w = bw * .64, y = H - pb - hh;
+      return [
+        svg('rect', { class: 'bar' + (s.ym === mesRel ? ' cur' : ''), x, y, width: w, height: Math.max(hh, s.v ? 2 : 0), rx: 3 }, svg('title', {}, `${nomeMes(s.ym)}: ${brl(s.v)} fechado, ${s.n} orçamento(s) enviado(s)`)),
+        s.v ? svg('text', { class: 'v', x: x + w / 2, y: y - 6, 'text-anchor': 'middle' }, curto(s.v)) : null,
+        svg('text', { x: x + w / 2, y: H - pb + 15, 'text-anchor': 'middle' }, nomeMes(s.ym)),
+        svg('text', { x: x + w / 2, y: H - pb + 28, 'text-anchor': 'middle' }, s.n + ' env.')
+      ];
+    }));
+
+  const linhasRep = repsAtivos().map(r => ({ r, n: numerosRep(L.filter(l => l.repId === r.uid), mesRel) }));
+  const semRep = numerosRep(L.filter(l => !l.repId || !repPorId(l.repId)), mesRel);
+  const totCom = linhasRep.reduce((s, x) => s + x.n.valorMes * num(x.r.comissao) / 100, 0);
+  const motivos = {}; L.filter(l => l.status === 'perdido').forEach(l => { const m = l.motivoTipo || (l.motivo || 'Outro').split(' — ')[0]; motivos[m] = (motivos[m] || 0) + 1; });
+  const totPerd = Object.values(motivos).reduce((a, b) => a + b, 0);
+  const funil = [['Levantamentos feitos', doMes.visitas.length], ['Orçamentos enviados', doMes.enviados.length], ['Contratos fechados', doMes.fechados.length]];
+  const maxF = Math.max(1, ...funil.map(f => f[1]));
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Relatórios e metas'), h('p', null, 'Fechamentos, metas e comissões dos representantes.')),
+      h('div', { style: 'width:190px' }, campo('Mês', selMes))),
+    h('div', { class: 'tiles' },
+      h('div', { class: 'tile t-ok' }, h('small', null, 'Fechado no mês'), h('b', null, brl(valorMes)), h('span', null, `${doMes.fechados.length} contrato(s)/mês${avulsoMes ? ' + ' + brl(avulsoMes) + ' avulso' : ''}`)),
+      h('div', { class: 'tile t-warn' }, h('small', null, 'Orçamentos enviados'), h('b', null, doMes.enviados.length), h('span', null, brl(doMes.enviados.reduce((s, l) => s + totais(l).tm, 0)) + '/mês em proposta')),
+      h('div', { class: 'tile' }, h('small', null, 'Taxa de fechamento'), h('b', null, taxaMes == null ? '—' : taxaMes + '%'), h('span', null, `${doMes.fechados.length} fechados · ${doMes.perdidos.length} perdidos no mês`)),
+      h('div', { class: 'tile t-info' }, h('small', null, 'Carteira ativa'), h('b', null, brl(carteira)), h('span', null, 'por mês, contratos em vigor')),
+      h('div', { class: 'tile' }, h('small', null, 'Comissões do mês'), h('b', null, brl(totCom)), h('span', null, 'a pagar aos representantes'))),
+    h('div', { class: 'panel chart' }, h('h3', null, 'Valor mensal fechado · últimos 12 meses'), h('div', { class: 'tbl-wrap' }, h('div', { style: 'min-width:520px' }, grafico)),
+      h('p', null, 'A barra verde é o mês escolhido. Embaixo de cada mês, a quantidade de orçamentos enviados.')),
+    h('div', { class: 'panel' }, h('h3', null, `Metas e comissões · ${nomeMes(mesRel)}`),
+      linhasRep.length ? h('div', { class: 'tbl-wrap' }, h('table', null,
+        h('thead', null, h('tr', null, h('th', null, 'Representante'), h('th', { class: 'n' }, 'Enviados'), h('th', { class: 'n' }, 'Fechados'), h('th', { class: 'n' }, 'Valor fechado'), h('th', { class: 'n' }, 'Meta'), h('th', null, '% da meta'), h('th', { class: 'n' }, 'Comissão'))),
+        h('tbody', null,
+          linhasRep.map(({ r, n }) => {
+            const pct = num(r.meta) ? n.valorMes / num(r.meta) * 100 : null;
+            return h('tr', null, h('td', null, r.nome), h('td', { class: 'n' }, n.enviadosMes), h('td', { class: 'n' }, n.fechMes), h('td', { class: 'n' }, brl(n.valorMes)),
+              h('td', { class: 'n' }, num(r.meta) ? brl(r.meta) : '—'),
+              h('td', null, pct == null ? '—' : h('div', { class: 'row', style: 'flex-wrap:nowrap' }, h('div', { class: 'prog', style: 'flex:1' }, h('i', { class: pct >= 100 ? 'ok' : '', style: `width:${Math.min(100, pct)}%` })), h('span', { class: 'num' }, Math.round(pct) + '%'))),
+              h('td', { class: 'n' }, num(r.comissao) ? brl(n.valorMes * num(r.comissao) / 100) : '—'));
+          }),
+          semRep.fechMes || semRep.enviadosMes ? h('tr', null, h('td', null, 'Gestor / sem representante'), h('td', { class: 'n' }, semRep.enviadosMes), h('td', { class: 'n' }, semRep.fechMes), h('td', { class: 'n' }, brl(semRep.valorMes)), h('td', { class: 'n' }, '—'), h('td', null, '—'), h('td', { class: 'n' }, '—')) : null,
+          h('tr', { class: 'tot' }, h('td', null, 'Total'), h('td', { class: 'n' }, doMes.enviados.length), h('td', { class: 'n' }, doMes.fechados.length), h('td', { class: 'n' }, brl(valorMes)), h('td'), h('td'), h('td', { class: 'n' }, brl(totCom))))))
+      : h('p', null, 'Cadastre representantes e defina a meta e a comissão de cada um em Representantes → Editar e metas.')),
+    h('div', { class: 'grid' },
+      h('div', { class: 'panel' }, h('h3', null, `Funil de ${nomeMes(mesRel)}`),
+        funil.map(([t, v]) => h('div', { style: 'display:flex;flex-direction:column;gap:4px' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', null, t), h('b', { class: 'num' }, v)), h('div', { class: 'prog' }, h('i', { style: `width:${v / maxF * 100}%` }))))),
+      h('div', { class: 'panel' }, h('h3', null, 'Por que não fechou'),
+        totPerd ? Object.entries(motivos).sort((a, b) => b[1] - a[1]).map(([m, v]) => h('div', { style: 'display:flex;flex-direction:column;gap:4px' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', null, m), h('b', { class: 'num' }, `${v} (${Math.round(v / totPerd * 100)}%)`)), h('div', { class: 'prog' }, h('i', { style: `width:${v / totPerd * 100}%;background:var(--bad)` }))))
+          : h('p', null, 'Nenhum orçamento marcado como "Não fechado" ainda.')))
+  ];
+}
+async function exportarExcel() {
+  try {
+    if (!window.XLSX) { toast('Preparando a planilha…'); await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'); }
+    const L = ativos();
+    const orc = L.map(l => {
+      const t = totais(l), v = validade(l), c = contratoInfo(l);
+      return {
+        'Número': l.numero, 'Cliente': l.cliente.nome, 'Tipo de local': l.cliente.tipo, 'Representante': nomeRep(l) || '—', 'Situação': STATUS[l.status],
+        'Data da visita': fmtData(l.cliente.dataVisita), 'Responsável': l.cliente.responsavel, 'Telefone': l.cliente.telefone, 'Endereço': l.cliente.endereco,
+        'Valor mensal proposto': Math.round(t.tm * 100) / 100, 'Valor avulso proposto': Math.round(t.ta * 100) / 100, 'Desconto %': num(l.orc.desconto),
+        'Emitido em': l.emitidoEm ? new Date(l.emitidoEm).toLocaleDateString('pt-BR') : '', 'Válido até': v ? v.venc.toLocaleDateString('pt-BR') : '',
+        'Valor mensal fechado': l.status === 'fechado' ? valorFechado(l) : '', 'Assinatura do contrato': fmtData(l.contrato.assinatura), 'Início': fmtData(l.contrato.inicio),
+        'Vigência (meses)': l.contrato.meses || '', 'Fim do contrato': c && c.fim ? fmtData(c.fim) : '', 'Motivo (não fechado)': l.status === 'perdido' ? l.motivo : '',
+        'Assinado pelo cliente': l.assinatura ? 'Sim' : 'Não', 'Localização': l.gps ? `${l.gps.lat}, ${l.gps.lng}` : ''
+      };
+    });
+    const rp = repsAtivos().map(r => { const n = numerosRep(L.filter(l => l.repId === r.uid), mesRel); return {
+      'Representante': r.nome, 'E-mail': r.email, 'Mês': nomeMes(mesRel), 'Orçamentos enviados no mês': n.enviadosMes, 'Contratos fechados no mês': n.fechMes,
+      'Valor fechado no mês': n.valorMes, 'Meta': num(r.meta), '% da meta': num(r.meta) ? Math.round(n.valorMes / num(r.meta) * 100) : '', 'Comissão %': num(r.comissao),
+      'Comissão R$': Math.round(n.valorMes * num(r.comissao)) / 100, 'A visitar': n.visitas, 'Em aberto': n.abertos, 'Fechados (total)': n.fechados, 'Não fechados (total)': n.perdidos }; });
+    const wb = XLSX.utils.book_new();
+    const s1 = XLSX.utils.json_to_sheet(orc.length ? orc : [{ 'Número': 'Nenhum orçamento' }]); s1['!cols'] = Object.keys(orc[0] || { a: 1 }).map(() => ({ wch: 18 }));
+    const s2 = XLSX.utils.json_to_sheet(rp.length ? rp : [{ 'Representante': 'Nenhum representante' }]); s2['!cols'] = Object.keys(rp[0] || { a: 1 }).map(() => ({ wch: 20 }));
+    XLSX.utils.book_append_sheet(wb, s1, 'Orçamentos'); XLSX.utils.book_append_sheet(wb, s2, 'Representantes');
+    XLSX.writeFile(wb, `orcamentos_${mesRel}.xlsx`);
+  } catch (e) { aviso('Não foi possível gerar a planilha', 'Confira a conexão com a internet e tente de novo.'); }
+}
+
+// =========================================================
+// 15. Minha empresa (gestor)
+// =========================================================
+function vEmpresa() {
+  const e = cfg.empresa, c = cfg.custos; const sv = () => salvarCfg();
+  const logoBox = h('div', { class: 'row' });
+  const pintaLogo = () => {
+    logoBox.replaceChildren(
+      e.logo ? h('img', { src: e.logo, alt: 'Logo da empresa', style: 'max-height:64px;max-width:180px;border:1px solid var(--line);border-radius:8px;padding:4px;background:#fff' }) : h('span', { style: 'color:var(--muted)' }, 'Sem logo'),
+      h('label', { class: 'btn sm', for: 'logoFile' }, e.logo ? 'Trocar logo' : 'Enviar logo'),
+      e.logo ? h('button', { class: 'btn sm danger', type: 'button', onclick: () => { e.logo = ''; sv(); pintaLogo(); } }, 'Remover') : null,
+      h('input', { type: 'file', id: 'logoFile', accept: 'image/*', hidden: true, onchange: async ev => {
+        const f = ev.target.files[0]; if (!f) return;
+        try { const r = await lerImagem(f, 500, /png|svg/.test(f.type) ? 'png' : 'jpeg'); e.logo = r.data; e.logoW = r.w; e.logoH = r.h; sv(); pintaLogo(); }
+        catch (x) { aviso('Imagem inválida', 'Não foi possível abrir essa imagem.'); }
+      } }));
+  };
+  pintaLogo();
+  const campoPreco = (id, txtRot) => {
+    const el = h('input', { type: 'text', inputmode: 'decimal', value: cfg.precos[id] ? fmtNum(cfg.precos[id]) : '', placeholder: '0,00', id: 'pr_' + id, 'aria-label': txtRot });
+    el.addEventListener('change', () => { cfg.precos[id] = num(el.value); el.value = cfg.precos[id] ? fmtNum(cfg.precos[id]) : ''; sv(); });
+    return el;
+  };
+  const precos = CATALOGO.map(cat => h('div', { class: 'cat' }, h('h3', null, cat.cat),
+    cat.itens.map(([id, nome, un]) => h('div', { class: 'row', style: 'justify-content:space-between;border-bottom:1px solid var(--line);padding-block:6px' },
+      h('span', { style: 'flex:1;min-width:180px' }, nome, h('span', { style: 'color:var(--muted);font-size:.82rem' }, ` · por ${un}`)), h('div', { style: 'width:140px' }, campoPreco(id, nome))))));
+
+  // composição de custos
+  const previa = h('div', { class: 'tbl-wrap' });
+  const pintaPrevia = () => {
+    previa.replaceChildren(h('table', { class: 'calc' },
+      h('thead', null, h('tr', null, h('th', null, 'Serviço'), h('th', { class: 'n' }, 'Pessoas'), h('th', { class: 'n' }, 'Custo'), h('th', { class: 'n' }, 'Preço sugerido'))),
+      h('tbody', null, Object.entries(POSTO).map(([id, [fn, esc]]) => { const r = calcPosto(fn, esc); return h('tr', null, h('td', null, ITEM_MAP[id].nome), h('td', { class: 'n' }, r.pessoas), h('td', { class: 'n' }, brl(r.custo)), h('td', { class: 'n' }, r.fatorOk ? brl(r.preco) : '—')); }))));
+  };
+  const nc = (obj, k, rot, ajuda) => { const el = h('input', { type: 'text', inputmode: 'decimal', value: num(obj[k]) ? String(obj[k]).replace('.', ',') : '', placeholder: '0', id: 'cu_' + k });
+    el.addEventListener('input', () => { obj[k] = num(el.value); sv(); pintaPrevia(); }); return h('label', { class: 'f' }, rot, el, ajuda ? h('span', { style: 'text-transform:none;letter-spacing:0;font-weight:400;font-size:.78rem' }, ajuda) : null); };
+  pintaPrevia();
+
+  // pacotes salvos
+  const pacBox = h('div', { class: 'cat' });
+  const pintaPac = () => pacBox.replaceChildren(...(cfg.pacotes.length ? cfg.pacotes.map(p => h('div', { class: 'row', style: 'justify-content:space-between;border-bottom:1px solid var(--line);padding-block:6px' },
+    h('span', null, h('b', null, p.nome), h('span', { style: 'color:var(--muted);font-size:.85rem' }, ' · ' + Object.keys(p.itens).map(id => (ITEM_MAP[id] || {}).nome).filter(Boolean).join(', '))),
+    h('button', { class: 'btn sm danger', type: 'button', onclick: async () => { if (await confirma('Apagar pacote?', p.nome, 'Apagar', 'danger')) { cfg.pacotes = cfg.pacotes.filter(x => x !== p); sv(); pintaPac(); } } }, 'Apagar')))
+    : [h('p', { class: 'nota' }, 'Nenhum pacote próprio ainda. Para criar, marque os serviços num levantamento e toque em "Salvar como pacote".')]));
+  pintaPac();
+
+  const clausulas = h('textarea', { id: 'clausulas', style: 'min-height:320px' }); clausulas.value = cfg.clausulas;
+  clausulas.addEventListener('input', () => { cfg.clausulas = clausulas.value; sv(); });
+  const regras = regrasFirebase(cfg.gestorEmail || sessao.email);
+  const areaRegras = h('textarea', { class: 'code', id: 'regrasEmp', readonly: true }); areaRegras.value = regras;
+
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Minha empresa'), h('p', null, 'Dados que aparecem nos orçamentos e contratos, preços e custos.'))),
+    h('div', { class: 'panel' }, h('h3', null, 'Dados da empresa'),
+      h('div', { class: 'grid' },
+        campo('Nome da empresa', inp(e, 'nome', { id: 'eNome' }, sv), 'full'),
+        campo('CNPJ', inp(e, 'cnpj', { id: 'eCnpj', inputmode: 'numeric' }, sv)),
+        campo('Telefone / WhatsApp', inp(e, 'telefone', { id: 'eTel', type: 'tel' }, sv)),
+        campo('E-mail', inp(e, 'email', { id: 'eMail', type: 'email' }, sv)),
+        campo('Cidade (foro e assinatura do contrato)', inp(e, 'cidade', { id: 'eCid' }, sv)),
+        campo('Quem assina pela empresa', inp(e, 'representante', { id: 'eRep' }, sv)),
+        campo('Endereço', inp(e, 'endereco', { id: 'eEnd' }, sv), 'full')),
+      h('div', { style: 'font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em' }, 'Logo'), logoBox),
+    h('div', { class: 'panel' }, h('h3', null, 'Composição de custos do posto'),
+      h('p', null, 'Preencha uma vez. O botão "Calcular pelo custo" nos serviços de portaria, vigia e limpeza usa estes números para sugerir o preço. Confirme salários e percentuais com seu contador.'),
+      h('div', { class: 'grid g3' }, Object.entries(FUNCOES).map(([k, t]) => nc(c.salarios, k, 'Salário ' + t))),
+      h('div', { class: 'grid g3' },
+        nc(c, 'noturno', 'Adicional noturno (%)', 'CLT: mínimo 20%'),
+        nc(c, 'horasNoturnas', 'Horas noturnas por plantão', 'Das 22h às 5h = 7 horas'),
+        nc(c, 'encargos', 'Encargos sociais (%)', 'INSS, FGTS, férias, 13º, provisões'),
+        nc(c, 'vt', 'Vale-transporte por dia (R$)'),
+        nc(c, 'va', 'Vale-alimentação por dia (R$)'),
+        nc(c, 'uniforme', 'Uniforme e EPI por mês (R$)'),
+        nc(c, 'outros', 'Outros custos por pessoa/mês (R$)', 'Seguro, exames, supervisão'),
+        nc(c, 'impostos', 'Impostos sobre a nota (%)'),
+        nc(c, 'margem', 'Lucro desejado (%)')),
+      h('h3', null, 'Prévia dos preços'), previa,
+      h('div', null, h('button', { class: 'btn navy', type: 'button', onclick: async () => {
+        if (!await confirma('Atualizar a tabela de preços?', 'Os serviços de posto na tabela abaixo passam a usar o preço sugerido pela calculadora. Os orçamentos já feitos não mudam.', 'Atualizar')) return;
+        Object.entries(POSTO).forEach(([id, [fn, esc]]) => { const r = calcPosto(fn, esc); if (r.fatorOk && r.preco) cfg.precos[id] = Math.round(r.preco * 100) / 100; });
+        await salvarCfg(); render(); toast('Tabela de preços atualizada');
+      } }, 'Usar estes preços na tabela'))),
+    h('div', { class: 'panel' }, h('h3', null, 'Tabela de preços'),
+      h('p', null, 'Valor padrão de cada serviço. Ele já vem preenchido quando o serviço é marcado num levantamento, e pode ser mudado caso a caso.'), precos),
+    h('div', { class: 'panel' }, h('h3', null, 'Pacotes próprios'), pacBox),
+    h('div', { class: 'panel' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', null, 'Cláusulas do contrato'),
+        h('button', { class: 'btn sm', type: 'button', onclick: async () => { if (await confirma('Voltar ao modelo original?', 'O texto que você editou será substituído.', 'Voltar')) { cfg.clausulas = CLAUSULAS_PADRAO; await salvarCfg(); render(); } } }, 'Restaurar modelo')),
+      h('p', null, 'Modelo de referência. Revise com seu advogado antes de usar. Cada cláusula começa com "CLÁUSULA" numa linha própria e fica separada por uma linha em branco. Palavras entre chaves são preenchidas sozinhas: {ENDERECO}, {VALOR}, {VALOR_EXTENSO}, {VENCIMENTO}, {MESES}, {INICIO}, {CIDADE}, {CONTRATANTE}, {CONTRATADA}.'),
+      clausulas),
+    h('div', { class: 'panel' }, h('h3', null, 'Minha senha'), h('div', null, h('button', { class: 'btn', type: 'button', onclick: trocarMinhaSenha }, 'Trocar minha senha'), ' ', h('button', { class: 'btn danger', type: 'button', onclick: sair }, 'Sair deste aparelho'))),
+    h('div', { class: 'panel' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', null, 'Regras do Firebase'), h('button', { class: 'btn sm navy', type: 'button', onclick: () => copiar(regras, areaRegras) }, 'Copiar')),
+      h('p', null, 'É o texto que libera este sistema na nuvem. Só precisa colar de novo se as regras forem apagadas.'), areaRegras)
+  ];
+}
+
+// =========================================================
+// 16. Etapas do levantamento
+// =========================================================
+function vCliente() {
+  const c = lev.cliente; const sv = () => salvar();
+  const sel = h('select', { id: 'cTipo' }, TIPOS_CLIENTE.map(t => h('option', { value: t, selected: t === c.tipo }, t)));
+  sel.addEventListener('change', () => { c.tipo = sel.value; sv(); });
+  const gpsBox = h('div', { class: 'gps' });
+  const pintaGPS = () => gpsBox.replaceChildren(
+    lev.gps ? h('span', null, textoGPS(lev.gps), ' · ', fmtMomento(lev.gps.em)) : h('span', { style: 'color:var(--muted)' }, 'Localização ainda não marcada'),
+    lev.gps ? h('a', { class: 'btn sm', href: linkMapa(lev.gps), target: '_blank', rel: 'noopener' }, 'Ver no mapa') : null,
+    h('button', { class: 'btn sm navy', type: 'button', onclick: async ev => {
+      const b = ev.currentTarget; b.disabled = true; b.textContent = 'Buscando…';
+      const g = await pegarGPS(12000);
+      if (g) { lev.gps = g; salvar(true); toast('Localização marcada'); } else aviso('Localização indisponível', 'Permita o acesso à localização no navegador e confira se o GPS do celular está ligado. O sistema precisa estar aberto pelo endereço com https.');
+      pintaGPS();
+    } }, lev.gps ? 'Marcar de novo' : 'Marcar localização agora'));
+  pintaGPS();
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Dados do cliente'), h('p', null, 'Quem é o cliente e onde fica o local visitado.'))),
+    h('div', { class: 'panel' }, h('div', { class: 'grid' },
+      campo('Tipo de local', sel),
+      campo('Data da visita', inp(c, 'dataVisita', { type: 'date', id: 'cData' }, sv)),
+      campo('Nome do cliente / condomínio / empresa', inp(c, 'nome', { id: 'cNome', placeholder: 'Ex.: Condomínio Residencial Ipê' }, () => { sv(); document.getElementById('sub').textContent = lev.numero + (c.nome ? ' · ' + c.nome : ''); }), 'full'),
+      campo('Responsável (síndico, gerente, proprietário)', inp(c, 'responsavel', { id: 'cResp' }, sv)),
+      campo('Telefone / WhatsApp', inp(c, 'telefone', { id: 'cTel', type: 'tel' }, sv)),
+      campo('E-mail', inp(c, 'email', { id: 'cMail', type: 'email' }, sv)),
+      campo('Tamanho do local (unidades, área, nº de portões)', inp(c, 'unidades', { id: 'cUn', placeholder: 'Ex.: 120 casas, 2 portarias' }, sv)),
+      campo('Endereço completo', inp(c, 'endereco', { id: 'cEnd' }, sv), 'full'),
+      campo('O que o cliente relatou', txt(c, 'observacoes', { id: 'cObs', placeholder: 'Problemas, furtos recentes, horários críticos, expectativas…' }, sv), 'full'))),
+    h('div', { class: 'panel' }, h('h3', null, 'Localização da visita'), h('p', null, 'Registra onde o levantamento foi feito. Sai no PDF e no painel do gestor.'), gpsBox)
+  ];
+}
+
+function abrirCalculadora(def, aoUsar) {
+  const [fn0, esc0] = POSTO[def.id];
+  const st = { fn: fn0, esc: esc0 };
+  const corpo = h('div');
+  const usar = h('button', { class: 'btn pri', type: 'button' }, 'Usar este preço');
+  const pinta = () => {
+    const r = calcPosto(st.fn, st.esc);
+    const semDados = !num(cfg.custos.salarios[st.fn]);
+    const linha = (t, v, forte) => h('tr', forte ? { class: 'tot' } : null, h('td', null, t), h('td', { class: 'n' }, typeof v === 'number' ? brl(v) : v));
+    corpo.replaceChildren(
+      semDados ? h('p', { class: 'atencao', style: 'margin:0' }, souGestor() ? 'Falta o salário desta função em Minha empresa → Composição de custos.' : 'O gestor ainda não preencheu a composição de custos. Peça a ele.') : null,
+      h('div', { class: 'tbl-wrap' }, h('table', { class: 'calc' }, h('tbody', null,
+        linha('Pessoas no posto', `${r.pessoas} (${r.e.dia} de dia, ${r.e.noite} à noite)`),
+        linha('Salário base por pessoa', r.sal),
+        r.e.noite ? linha('Adicional noturno por pessoa da noite', r.adicNoite) : null,
+        linha('Encargos por pessoa', r.e.noite && !r.e.dia ? r.pn.enc : r.pd.enc),
+        linha(`Benefícios e uniforme por pessoa (${r.e.dias} dias)`, r.pd.ben),
+        linha('Custo total do posto por mês', r.custo, true),
+        linha(`Impostos (${fmtNum(cfg.custos.impostos)}%)`, r.impostos),
+        linha(`Lucro (${fmtNum(cfg.custos.margem)}%)`, r.margem)))),
+      h('div', { class: 'row', style: 'justify-content:space-between' }, h('span', { class: 'nota' }, 'Preço sugerido por ' + def.unidade), h('span', { class: 'preco' }, r.fatorOk ? brl(r.preco) : 'Revise impostos + lucro')));
+    usar.disabled = !r.fatorOk || !r.preco; usar.onclick = () => { aoUsar(Math.round(r.preco * 100) / 100); m.remove(); };
+  };
+  const selF = h('select', { id: 'calcF' }, Object.entries(FUNCOES).map(([k, t]) => h('option', { value: k, selected: k === st.fn }, t)));
+  const selE = h('select', { id: 'calcE' }, Object.entries(ESCALAS).map(([k, e]) => h('option', { value: k, selected: k === st.esc }, e.t)));
+  selF.addEventListener('change', () => { st.fn = selF.value; pinta(); }); selE.addEventListener('change', () => { st.esc = selE.value; pinta(); });
+  const m = h('div', { class: 'modal', onclick: e => { if (e.target === m) m.remove(); } }, h('div', { class: 'box larga', role: 'dialog', 'aria-modal': 'true' },
+    h('h3', null, 'Calcular pelo custo'), h('p', null, def.nome),
+    h('div', { class: 'grid' }, campo('Função', selF), campo('Escala', selE)), corpo,
+    h('div', { class: 'row', style: 'justify-content:flex-end' }, h('button', { class: 'btn', type: 'button', onclick: () => m.remove() }, 'Fechar'), usar)));
+  pinta(); document.body.append(m);
+}
+function cardItem(def, s, extra) {
+  const lt = h('span', { class: 'lt' });
+  const pintaLT = () => { lt.textContent = s.sel ? brl(num(s.qtd) * num(s.preco)) : ''; };
+  const corpo = h('div', { class: 'ib', hidden: !s.sel });
+  const qtd = h('input', { type: 'number', min: '0', step: '1', inputmode: 'numeric', value: s.qtd ?? 1, id: 'q_' + def.id });
+  qtd.addEventListener('input', () => { s.qtd = qtd.value; pintaLT(); atualizarTotaisBarra(); salvar(); });
+  const preco = h('input', { type: 'text', inputmode: 'decimal', value: s.preco ? fmtNum(s.preco) : '', placeholder: '0,00', id: 'p_' + def.id });
+  preco.addEventListener('input', () => { s.preco = num(preco.value); pintaLT(); atualizarTotaisBarra(); salvar(); });
+  preco.addEventListener('change', () => { preco.value = s.preco ? fmtNum(s.preco) : ''; });
+  const obs = h('input', { type: 'text', value: s.obs || '', placeholder: 'Detalhe (horário, local, observação)', id: 'o_' + def.id });
+  obs.addEventListener('input', () => { s.obs = obs.value; salvar(); });
+  corpo.append(campo('Qtd', qtd), campo(`Valor por ${def.unidade}`, preco), campo('Observação', obs, 'full'));
+  if (!extra && POSTO[def.id]) corpo.append(h('div', { class: 'full wide' }, h('button', { class: 'btn sm navy', type: 'button', onclick: () => abrirCalculadora(def, v => { s.preco = v; preco.value = fmtNum(v); pintaLT(); atualizarTotaisBarra(); salvar(); toast('Preço aplicado'); }) }, 'Calcular pelo custo')));
+  if (extra) corpo.append(h('div', { class: 'full wide' }, h('button', { class: 'btn sm danger', type: 'button', onclick: async () => {
+    if (!await confirma('Remover este serviço?', def.nome, 'Remover', 'danger')) return;
+    lev.extras = lev.extras.filter(x => x.id !== def.id); salvar(); render();
+  } }, 'Remover serviço')));
+  const cb = h('input', { type: 'checkbox', checked: !!s.sel, id: 'c_' + def.id, 'aria-label': def.nome });
+  const card = h('div', { class: 'item' + (s.sel ? ' sel' : '') },
+    h('label', { class: 'ih', for: 'c_' + def.id }, cb,
+      h('span', { class: 'nm' }, h('b', null, def.nome), h('span', null, `por ${def.unidade} · `, h('span', { class: 'tag' }, def.tipo === 'mensal' ? 'mensal' : 'avulso'))), lt), corpo);
+  cb.addEventListener('change', () => {
+    s.sel = cb.checked;
+    if (s.sel) { if (s.qtd == null || s.qtd === '') s.qtd = 1; if (!s.preco && !extra && cfg.precos[def.id]) { s.preco = cfg.precos[def.id]; preco.value = fmtNum(s.preco); } qtd.value = s.qtd; }
+    card.classList.toggle('sel', s.sel); corpo.hidden = !s.sel; pintaLT(); atualizarTotaisBarra(); salvar();
+  });
+  pintaLT();
+  return card;
+}
+async function aplicarPacote(p) {
+  const nomes = Object.entries(p.itens).map(([id, q]) => ITEM_MAP[id] ? `${q}× ${ITEM_MAP[id].nome}` : null).filter(Boolean).join('\n');
+  if (!await confirma('Usar o pacote "' + p.nome + '"?', 'Estes serviços serão marcados (os que já estavam marcados continuam):\n' + nomes, 'Marcar serviços')) return;
+  Object.entries(p.itens).forEach(([id, q]) => {
+    if (!ITEM_MAP[id]) return;
+    const s = lev.servicos[id] || (lev.servicos[id] = { sel: false, qtd: 1, preco: 0, obs: '' });
+    s.sel = true; s.qtd = q; if (!s.preco && cfg.precos[id]) s.preco = cfg.precos[id];
+  });
+  salvar(true); render(); toast('Pacote aplicado');
+}
+async function salvarPacote() {
+  const its = itensSelecionados(lev).filter(i => ITEM_MAP[i.id]);
+  if (!its.length) { aviso('Nenhum serviço marcado', 'Marque os serviços que formam o pacote e toque de novo.'); return; }
+  const v = await formModal('Salvar como pacote', its.map(i => `${i.qtd}× ${i.nome}`).join('\n'), [{ k: 'nome', rot: 'Nome do pacote', req: true, ph: 'Ex.: Condomínio pequeno' }], 'Salvar');
+  if (!v) return;
+  cfg.pacotes.push({ id: 'p_' + uid(), nome: v.nome.trim(), itens: Object.fromEntries(its.map(i => [i.id, i.qtd || 1])) });
+  await salvarCfg(); render(); toast('Pacote salvo para todos');
+}
+function vNecessidades() {
+  const pacotes = [...PACOTES_PADRAO, ...cfg.pacotes];
+  const cats = CATALOGO.map(c => h('div', { class: 'cat' }, h('h3', null, c.cat),
+    c.itens.map(([id]) => { if (!lev.servicos[id]) lev.servicos[id] = { sel: false, qtd: 1, preco: 0, obs: '' }; return cardItem(ITEM_MAP[id], lev.servicos[id], false); })));
+  const extras = lev.extras.length ? h('div', { class: 'cat' }, h('h3', null, 'Outros serviços'), lev.extras.map(e => cardItem(e, e, true))) : null;
+  const nv = { nome: '', unidade: 'mês', tipo: 'mensal' };
+  const tipoSel = h('select', { id: 'nTipo' }, h('option', { value: 'mensal' }, 'Mensal (todo mês)'), h('option', { value: 'avulso' }, 'Avulso (uma vez)'));
+  tipoSel.addEventListener('change', () => nv.tipo = tipoSel.value);
+  const add = h('div', { class: 'panel' }, h('h3', null, 'Adicionar outro serviço'),
+    h('div', { class: 'grid' },
+      campo('Nome do serviço', inp(nv, 'nome', { id: 'nNome', placeholder: 'Ex.: Portaria remota' }), 'full'),
+      campo('Cobrado por', inp(nv, 'unidade', { id: 'nUn', placeholder: 'mês, posto, hora, diária…' })),
+      campo('Tipo de cobrança', tipoSel)),
+    h('div', null, h('button', { class: 'btn navy', type: 'button', onclick: () => {
+      if (!nv.nome.trim()) { aviso('Falta o nome', 'Escreva o nome do serviço antes de adicionar.'); return; }
+      lev.extras.push({ id: 'x_' + uid(), nome: nv.nome.trim(), unidade: nv.unidade.trim() || 'unidade', tipo: nv.tipo, sel: true, qtd: 1, preco: 0, obs: '' });
+      salvar(); render(); toast('Serviço adicionado');
+    } }, 'Adicionar serviço')));
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'O que o cliente precisa'), h('p', null, 'Comece por um pacote pronto ou marque cada serviço, com quantidade e valor.'))),
+    h('div', { class: 'panel', style: 'gap:10px' }, h('h3', null, 'Pacotes prontos'),
+      h('div', { class: 'chips wrapl' }, pacotes.map(p => h('button', { type: 'button', class: 'chipb pac', onclick: () => aplicarPacote(p) }, p.nome))),
+      souGestor() ? h('div', null, h('button', { class: 'btn sm', type: 'button', onclick: salvarPacote }, 'Salvar seleção atual como pacote')) : null),
+    ...cats, extras, add
+  ];
+}
+function vEstrutura() {
+  const lista = ESTRUTURA.map(([id, nome, temQtd]) => {
+    const s = lev.estrutura[id] || (lev.estrutura[id] = { status: '', qtd: '', obs: '' });
+    const extra = h('div', { class: 'ex' });
+    const seg = h('div', { class: 'seg', role: 'group', 'aria-label': nome });
+    const pinta = () => { seg.querySelectorAll('button').forEach(b => { const on = b.dataset.v === s.status; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); extra.hidden = !s.status; };
+    Object.entries(SITUACAO).forEach(([k, t]) => seg.append(h('button', { type: 'button', class: k, 'data-v': k, onclick: () => { s.status = s.status === k ? '' : k; pinta(); salvar(); } }, t)));
+    if (temQtd) extra.append(campo('Qtd', inp(s, 'qtd', { type: 'number', min: '0', inputmode: 'numeric', id: 'eq_' + id }, () => salvar())));
+    else extra.style.gridTemplateColumns = '1fr';
+    extra.append(campo('Observação', inp(s, 'obs', { id: 'eo_' + id, placeholder: 'Estado, modelo, ponto de atenção' }, () => salvar())));
+    pinta();
+    return h('div', { class: 'est' }, h('div', { class: 'en' }, nome), seg, extra);
+  });
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'O que o local já possui'), h('p', null, 'Marque a situação de cada item. Os que você não marcar ficam fora do relatório.'))),
+    h('div', { class: 'cat' }, lista),
+    h('div', { class: 'panel' }, h('h3', null, 'Riscos e pontos de atenção'),
+      campo('Anotações do levantamento', txt(lev, 'obsLocal', { id: 'obsLocal', placeholder: 'Pontos cegos, acessos sem controle, iluminação fraca, muro baixo nos fundos…' }, () => salvar())))
+  ];
+}
+function vFotos() {
+  const grade = h('div', { class: 'fotos' });
+  const pinta = () => {
+    grade.replaceChildren(
+      ...lev.fotos.map((f, i) => {
+        const leg = h('input', { type: 'text', value: f.legenda || '', placeholder: 'Legenda da foto', id: 'fl_' + f.id });
+        leg.addEventListener('input', () => { f.legenda = leg.value; salvar(); });
+        return h('div', { class: 'foto' }, f.data ? h('img', { src: f.data, alt: f.legenda || `Foto ${i + 1}` }) : h('div', { class: 'ph' }, 'Carregando foto da nuvem…'),
+          h('div', { class: 'fb' }, leg, h('div', { class: 'row', style: 'justify-content:space-between' },
+            h('span', { style: 'color:var(--muted);font-size:.82rem' }, `Foto ${i + 1}${f.gps ? ' · com local' : ''}`),
+            h('div', { class: 'row' },
+              i > 0 ? h('button', { class: 'btn sm', type: 'button', 'aria-label': 'Mover para trás', onclick: () => { [lev.fotos[i - 1], lev.fotos[i]] = [lev.fotos[i], lev.fotos[i - 1]]; salvar(); pinta(); } }, '←') : null,
+              h('button', { class: 'btn sm danger', type: 'button', onclick: async () => { if (await confirma('Apagar esta foto?', f.legenda || '', 'Apagar', 'danger')) { if (f.nuvem) (lev.fotosApagar = lev.fotosApagar || []).push(f.id); lev.fotos.splice(i, 1); salvar(true); pinta(); } } }, 'Apagar')))));
+      }),
+      h('label', { class: 'add', for: 'fotoFile' }, h('span', null, h('strong', null, '+ Adicionar fotos'), 'Tire na hora ou escolha da galeria. Cada foto recebe carimbo com data, hora e local.')));
+  };
+  const file = h('input', { type: 'file', id: 'fotoFile', accept: 'image/*', multiple: true, hidden: true, onchange: async e => {
+    const fs = [...e.target.files]; e.target.value = ''; if (!fs.length) return;
+    setStatus('Pegando a localização…'); toast('Preparando fotos…');
+    const g = await pegarGPS(7000);
+    if (g && !lev.gps) lev.gps = g;
+    for (const f of fs) {
+      const quando = f.lastModified ? new Date(f.lastModified) : new Date();
+      const linhas = [
+        quando.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) + '  ·  ' + (cfg.empresa.nome || ''),
+        g ? 'Local: ' + textoGPS(g) : 'Local: não disponível',
+        [lev.cliente.nome, lev.numero].filter(Boolean).join('  ·  '),
+        nomeRep(lev) ? 'Representante: ' + nomeRep(lev) : ''
+      ].filter(Boolean);
+      try { const r = await lerImagem(f, 1280, 'jpeg', linhas); lev.fotos.push({ id: uid(), data: r.data, w: r.w, h: r.h, legenda: '', em: quando.getTime(), gps: g || null }); }
+      catch (x) { toast('Uma imagem não pôde ser aberta'); }
+    }
+    salvar(true); pinta();
+  } });
+  pinta();
+  if (lev.fotos.some(f => !f.data)) { const alvo = lev; garantirFotos(alvo).then(ok => { if (lev === alvo && view === 'editor' && step === 3) pinta(); if (!ok) toast('Algumas fotos ainda não chegaram à nuvem'); }); }
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Fotos do local'), h('p', null, 'As fotos entram no PDF, duas por linha, com a legenda embaixo.'))),
+    file, grade
+  ];
+}
+function painelAssinatura() {
+  const p = h('div', { class: 'panel' }, h('h3', null, 'Aceite do cliente'));
+  const pinta = () => {
+    p.replaceChildren(h('h3', null, 'Aceite do cliente'));
+    if (lev.assinatura) {
+      p.append(h('img', { class: 'sigimg', src: lev.assinatura.data, alt: 'Assinatura de ' + lev.assinatura.nome }),
+        h('p', null, `Assinado por ${lev.assinatura.nome} em ${fmtMomento(lev.assinatura.em)}.`),
+        h('div', null, h('button', { class: 'btn sm danger', type: 'button', onclick: async () => { if (await confirma('Apagar a assinatura?', 'O cliente terá que assinar de novo.', 'Apagar', 'danger')) { lev.assinatura = null; salvar(true); pinta(); } } }, 'Apagar e assinar de novo')));
+      return;
+    }
+    const nome = { v: lev.cliente.responsavel || '' };
+    const cv = h('canvas', { class: 'sig', width: 900, height: 300, 'aria-label': 'Área para o cliente assinar com o dedo' });
+    const ctx = cv.getContext && cv.getContext('2d');
+    let desenhando = false, rabiscou = false, ult = null;
+    const limpa = () => { if (!ctx) return; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height); rabiscou = false; };
+    const ponto = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height }; };
+    if (ctx) {
+      limpa(); ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#111';
+      cv.addEventListener('pointerdown', e => { e.preventDefault(); desenhando = true; ult = ponto(e); try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+      cv.addEventListener('pointermove', e => { if (!desenhando) return; const q = ponto(e); ctx.beginPath(); ctx.moveTo(ult.x, ult.y); ctx.lineTo(q.x, q.y); ctx.stroke(); ult = q; rabiscou = true; });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => cv.addEventListener(t, () => { desenhando = false; }));
+    }
+    p.append(h('p', null, 'Peça ao cliente para assinar com o dedo, confirmando que acompanhou o levantamento e recebeu a proposta. A assinatura sai no PDF.'),
+      campo('Nome de quem assina', inp(nome, 'v', { id: 'sigNome' })), cv,
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm', type: 'button', onclick: limpa }, 'Limpar'),
+        h('button', { class: 'btn sm pri', type: 'button', onclick: () => {
+          if (!ctx || !rabiscou) { aviso('Falta a assinatura', 'O cliente precisa assinar no quadro branco.'); return; }
+          if (!nome.v.trim()) { aviso('Falta o nome', 'Escreva o nome de quem assinou.'); return; }
+          lev.assinatura = { data: cv.toDataURL('image/png'), nome: nome.v.trim(), em: Date.now(), gps: lev.gps || null };
+          lev.historico.push({ em: Date.now(), status: lev.status, nota: 'Proposta assinada na tela por ' + nome.v.trim() });
+          salvar(true); pinta(); toast('Assinatura salva');
+        } }, 'Salvar assinatura')));
+  };
+  pinta();
+  return p;
+}
+function vOrcamento() {
+  const o = lev.orc;
+  const resumo = h('div', { class: 'panel' });
+  const pintaResumo = () => {
+    const t = totais(lev);
+    const linhas = grupo => t.its.filter(i => (i.tipo === 'mensal') === grupo).map(i =>
+      h('tr', null, h('td', null, i.nome, i.obs ? h('div', { style: 'color:var(--muted);font-size:.82rem' }, i.obs) : null), h('td', { class: 'n' }, i.qtd), h('td', null, i.unidade), h('td', { class: 'n' }, brl(i.preco)), h('td', { class: 'n' }, brl(i.qtd * i.preco))));
+    const lm = linhas(true), la = linhas(false);
+    resumo.replaceChildren(h('h3', null, 'Serviços orçados'),
+      t.its.length ? h('div', { class: 'tbl-wrap' }, h('table', null,
+        h('thead', null, h('tr', null, h('th', null, 'Serviço'), h('th', { class: 'n' }, 'Qtd'), h('th', null, 'Unid.'), h('th', { class: 'n' }, 'Valor'), h('th', { class: 'n' }, 'Total'))),
+        h('tbody', null, lm.length ? [h('tr', null, h('td', { colspan: 5, style: 'font-weight:600' }, 'Mensais')), lm] : null, la.length ? [h('tr', null, h('td', { colspan: 5, style: 'font-weight:600' }, 'Avulsos (pagamento único)')), la] : null)))
+      : h('p', null, 'Nenhum serviço marcado. Volte à etapa "Necessidades".'),
+      t.its.length ? h('div', { class: 'totals' },
+        t.sm ? [h('div', null, h('span', null, 'Subtotal mensal'), h('span', null, brl(t.sm))), t.dm ? h('div', null, h('span', null, `Desconto (${fmtNum(t.dpct)}%)`), h('span', null, '− ' + brl(t.dm))) : null] : null,
+        t.sa ? [h('div', null, h('span', null, 'Subtotal avulso'), h('span', null, brl(t.sa))), t.da ? h('div', null, h('span', null, `Desconto (${fmtNum(t.dpct)}%)`), h('span', null, '− ' + brl(t.da))) : null] : null,
+        h('div', { class: 'big' }, h('span', null, 'Total mensal'), h('span', null, brl(t.tm))),
+        t.ta ? h('div', { style: 'font-weight:600' }, h('span', null, 'Total avulso'), h('span', null, brl(t.ta))) : null) : null);
+    atualizarTotaisBarra();
+  };
+  pintaResumo();
+  const fotosN = lev.fotos.length, estN = Object.values(lev.estrutura).filter(s => s.status).length;
+  const share = typeof navigator.canShare === 'function';
+  return [
+    h('div', { class: 'head' }, h('div', null, h('h2', null, 'Orçamento'), h('p', null, `${lev.numero} · ${lev.cliente.nome || 'cliente sem nome'} · ${estN} item(ns) do local · ${fotosN} foto(s)`))),
+    resumo,
+    h('div', { class: 'panel' }, h('h3', null, 'Condições da proposta'), h('div', { class: 'grid' },
+      campo('Desconto (%)', inp(o, 'desconto', { type: 'number', min: '0', max: '100', step: '0.5', inputmode: 'decimal', id: 'oDesc' }, () => { salvar(); pintaResumo(); })),
+      campo('Validade da proposta (dias)', inp(o, 'validade', { type: 'number', min: '1', inputmode: 'numeric', id: 'oVal' }, () => salvar())),
+      campo('Início previsto', inp(o, 'inicio', { id: 'oIni', placeholder: 'Ex.: 5 dias após a assinatura' }, () => salvar())),
+      campo('Forma de pagamento', inp(o, 'pagamento', { id: 'oPag', placeholder: 'Ex.: boleto mensal, vencimento dia 10' }, () => salvar())),
+      campo('Observações da proposta', txt(o, 'observacoes', { id: 'oObs', placeholder: 'O que está incluso (uniforme, EPI, encargos), o que não está…' }, () => salvar()), 'full'))),
+    painelAssinatura(),
+    h('div', { class: 'panel' }, h('h3', null, 'Gerar documento'),
+      h('p', null, souRep() ? 'Ao gerar o PDF, o orçamento passa para "Orçamento enviado" e a validade começa a contar.' : 'Ao gerar o PDF, o orçamento passa para "Orçamento enviado" no painel e a validade começa a contar.'),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn pri', type: 'button', onclick: () => gerarPDF(false) }, 'Baixar PDF'),
+        share ? h('button', { class: 'btn navy', type: 'button', onclick: () => gerarPDF(true) }, 'Enviar PDF (WhatsApp, e-mail…)') : null))
+  ];
+}
+
+// =========================================================
+// 17. PDF do orçamento
+// =========================================================
+async function gerarPDF(compartilhar) {
+  if (!window.jspdf || !window.jspdf.jsPDF) { aviso('Sem conexão', 'O gerador de PDF não carregou. Conecte o aparelho à internet e abra o sistema de novo.'); return; }
+  if (!lev.cliente.nome.trim()) { if (!await confirma('Cliente sem nome', 'O orçamento vai sair sem o nome do cliente. Gerar assim mesmo?', 'Gerar')) return; }
+  setStatus('Gerando PDF…');
+  if (lev.fotos.some(f => !f.data)) { toast('Buscando fotos na nuvem…'); if (!await garantirFotos(lev)) toast('Algumas fotos não foram encontradas e ficarão fora do PDF'); }
+  if (lev.status === 'levantamento' || lev.status === 'visitar') {
+    lev.status = 'enviado'; lev.emitidoEm = Date.now();
+    lev.historico.push({ em: Date.now(), status: 'enviado', nota: `PDF gerado, validade de ${num(lev.orc.validade) || 15} dias` });
+  } else if (!lev.emitidoEm) lev.emitidoEm = Date.now();
+  await gravar(lev);
+  let doc;
+  try { doc = montarPDF(lev, cfg); }
+  catch (e) { console.error(e); aviso('Erro ao gerar o PDF', 'Alguma foto ou o logo pode estar com problema. Tente remover a última foto adicionada.'); setStatus(''); return; }
+  await entregarPDF(doc, `Orcamento_${lev.numero}${lev.cliente.nome ? '_' + slug(lev.cliente.nome) : ''}.pdf`, 'Orçamento ' + lev.numero, compartilhar);
+  if (view !== 'editor') render();
+}
+async function entregarPDF(doc, nome, titulo, compartilhar) {
+  if (compartilhar) {
+    try {
+      const file = new File([doc.output('blob')], nome, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: titulo }); setStatus('PDF enviado'); return; }
+    } catch (e) { if (e && e.name === 'AbortError') { setStatus(''); return; } }
+    toast('Este aparelho não permite enviar direto. O PDF foi baixado.');
+  }
+  doc.save(nome); setStatus('PDF gerado');
+}
+const COR_PDF = { NAVY: [10, 10, 12], AMBER: [212, 175, 55], INK: [20, 20, 22], GRAY: [100, 100, 108], LIGHT: [243, 240, 230] };
+function cabecalhoPDF(doc, cf, titulo, numero, data) {
+  const { NAVY, AMBER } = COR_PDF, W = 210, M = 14, e = cf.empresa;
+  doc.setFillColor(...NAVY); doc.rect(0, 0, W, 32, 'F');
+  doc.setFillColor(...AMBER); doc.rect(0, 32, W, 1.2, 'F');
+  doc.setFillColor(200, 30, 30); doc.rect(0, 33.2, W, 0.5, 'F');
+  let tx = M;
+  if (e.logo) {
+    try {
+      const r = (e.logoW || 1) / (e.logoH || 1); let lh = 22, lw = lh * r; if (lw > 42) { lw = 42; lh = lw / r; }
+      doc.setFillColor(255, 255, 255); doc.roundedRect(M - 1.5, 5 - 1.5 + (22 - lh) / 2, lw + 3, lh + 3, 1.5, 1.5, 'F');
+      doc.addImage(e.logo, e.logo.startsWith('data:image/png') ? 'PNG' : 'JPEG', M, 5 + (22 - lh) / 2, lw, lh);
+      tx = M + lw + 6;
+    } catch (x) { tx = M; }
+  }
+  const larg = W - M - tx - 52;
+  doc.setTextColor(...AMBER); doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+  doc.text(doc.splitTextToSize(e.nome || 'Empresa', larg)[0], tx, 12);
+  doc.setTextColor(234, 231, 224); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+  const l1 = [e.cnpj && 'CNPJ ' + e.cnpj, e.telefone].filter(Boolean).join('   |   ');
+  const l2 = [e.email, e.endereco].filter(Boolean).join('   |   ');
+  if (l1) doc.text(doc.splitTextToSize(l1, larg)[0], tx, 18.5);
+  if (l2) doc.text(doc.splitTextToSize(l2, larg)[0], tx, 23.5);
+  doc.setTextColor(...AMBER); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(titulo, W - M, 12, { align: 'right' });
+  doc.setTextColor(234, 231, 224); doc.setFontSize(10); doc.text(numero, W - M, 18.5, { align: 'right' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.text(data, W - M, 23.5, { align: 'right' });
+}
+function rodapePDF(doc, cf, numero) {
+  const W = 210, H = 297, M = 14, n = doc.getNumberOfPages();
+  for (let p = 1; p <= n; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(210, 216, 223); doc.setLineWidth(0.2); doc.line(M, H - 11, W - M, H - 11);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...COR_PDF.GRAY);
+    doc.text(`${cf.empresa.nome || ''}  |  ${numero}`, M, H - 7);
+    doc.text(`Página ${p} de ${n}`, W - M, H - 7, { align: 'right' });
+  }
+}
+function ferramentasPDF(doc, estado) {
+  const { NAVY, AMBER, INK } = COR_PDF, W = 210, H = 297, M = 14, CW = W - 2 * M, BOT = H - 16;
+  const precisa = hh => { if (estado.y + hh > BOT) { doc.addPage(); estado.y = 20; } };
+  return {
+    precisa,
+    secao: titulo => {
+      precisa(16);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...NAVY); doc.text(titulo.toUpperCase(), M, estado.y);
+      doc.setDrawColor(...AMBER); doc.setLineWidth(0.8); doc.line(M, estado.y + 1.8, M + 18, estado.y + 1.8);
+      doc.setDrawColor(210, 216, 223); doc.setLineWidth(0.2); doc.line(M + 18, estado.y + 1.8, W - M, estado.y + 1.8);
+      estado.y += 7;
+    },
+    paragrafo: (texto, tam = 9.5, negrito = false, recuo = 0) => {
+      doc.setFont('helvetica', negrito ? 'bold' : 'normal'); doc.setFontSize(tam); doc.setTextColor(...INK);
+      doc.splitTextToSize(String(texto), CW - recuo).forEach(ln => { precisa(5); doc.text(ln, M + recuo, estado.y); estado.y += tam * 0.45; });
+      estado.y += negrito ? 1.5 : 4;
+    },
+    tabela: opts => {
+      doc.autoTable(Object.assign({
+        startY: estado.y, margin: { left: M, right: M, top: 20, bottom: 18 },
+        styles: { font: 'helvetica', fontSize: 9, textColor: INK, cellPadding: 2.2, lineColor: [215, 220, 226], lineWidth: 0.15 },
+        headStyles: { fillColor: NAVY, textColor: AMBER, fontStyle: 'bold', fontSize: 8.5 },
+        alternateRowStyles: { fillColor: [248, 249, 251] }
+      }, opts));
+      estado.y = doc.lastAutoTable.finalY + 7;
+    }
+  };
+}
+function montarPDF(l, cf) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const { NAVY, AMBER, INK, GRAY, LIGHT } = COR_PDF, W = 210, M = 14, CW = W - 2 * M;
+  const COR = { bom: [31, 138, 76], reparo: [184, 110, 0], nao: [192, 57, 43] };
+  const e = cf.empresa, c = l.cliente, t = totais(l);
+  const repNome = nomeRep(l) || e.representante || '';
+  const emissao = l.emitidoEm ? new Date(l.emitidoEm) : new Date();
+  cabecalhoPDF(doc, cf, 'ORÇAMENTO', l.numero, 'Emitido em ' + emissao.toLocaleDateString('pt-BR'));
+  const st = { y: 42 }; const { precisa, secao, paragrafo, tabela } = ferramentasPDF(doc, st);
+
+  secao('Dados do cliente');
+  tabela({
+    theme: 'grid', showHead: false,
+    columnStyles: { 0: { fontStyle: 'bold', fillColor: LIGHT, cellWidth: 32 }, 2: { fontStyle: 'bold', fillColor: LIGHT, cellWidth: 30 } },
+    body: [
+      ['Cliente', { content: c.nome || '—', colSpan: 3 }],
+      ['Tipo de local', c.tipo || '—', 'Data da visita', fmtData(c.dataVisita) || '—'],
+      ['Responsável', c.responsavel || '—', 'Telefone', c.telefone || '—'],
+      ['E-mail', c.email || '—', 'Representante', repNome || '—'],
+      ['Endereço', { content: c.endereco || '—', colSpan: 3 }],
+      c.unidades ? ['Tamanho do local', { content: c.unidades, colSpan: 3 }] : null,
+      l.gps ? ['Local da visita', { content: `${textoGPS(l.gps)} · registrado em ${fmtMomento(l.gps.em)}`, colSpan: 3 }] : null
+    ].filter(Boolean)
+  });
+  if (c.observacoes && c.observacoes.trim()) { secao('Necessidade relatada pelo cliente'); paragrafo(c.observacoes); }
+
+  secao('Serviços propostos');
+  if (t.its.length) {
+    const body = [];
+    const grupo = (rot, mensal) => {
+      const its = t.its.filter(i => (i.tipo === 'mensal') === mensal); if (!its.length) return;
+      body.push([{ content: rot, colSpan: 5, styles: { fontStyle: 'bold', fillColor: LIGHT, textColor: [140, 110, 20] } }]);
+      its.forEach(i => body.push([i.nome + (i.obs ? '\n' + i.obs : ''), String(i.qtd), i.unidade, fmtNum(i.preco), fmtNum(i.qtd * i.preco)]));
+    };
+    grupo('Serviços mensais', true); grupo('Serviços avulsos (pagamento único)', false);
+    tabela({ theme: 'grid', head: [['Serviço', 'Qtd', 'Unidade', 'Valor unit. (R$)', 'Total (R$)']], body,
+      columnStyles: { 1: { halign: 'center', cellWidth: 14 }, 2: { cellWidth: 24 }, 3: { halign: 'right', cellWidth: 30 }, 4: { halign: 'right', cellWidth: 30 } } });
+    const linhas = [];
+    if (t.sm) { linhas.push(['Subtotal mensal', brl(t.sm)]); if (t.dm) linhas.push([`Desconto (${fmtNum(t.dpct)}%)`, '- ' + brl(t.dm)]); }
+    if (t.sa) { linhas.push(['Subtotal avulso', brl(t.sa)]); if (t.da) linhas.push([`Desconto (${fmtNum(t.dpct)}%)`, '- ' + brl(t.da)]); linhas.push(['Total avulso', brl(t.ta)]); }
+    precisa(linhas.length * 5.5 + 18);
+    const bx = W - M - 80;
+    doc.setFontSize(9.5); doc.setTextColor(...INK);
+    linhas.forEach(([a, b]) => { doc.setFont('helvetica', a.startsWith('Total') ? 'bold' : 'normal'); doc.text(a, bx, st.y); doc.text(b, W - M, st.y, { align: 'right' }); st.y += 5.5; });
+    doc.setFillColor(...NAVY); doc.rect(bx - 3, st.y - 1, 83, 11, 'F');
+    doc.setFillColor(...AMBER); doc.rect(bx - 3, st.y - 1, 1.6, 11, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.text('TOTAL MENSAL', bx + 1, st.y + 6);
+    doc.setTextColor(...AMBER); doc.setFontSize(13); doc.text(brl(t.tm), W - M - 2, st.y + 6.3, { align: 'right' });
+    st.y += 17;
+  } else paragrafo('Nenhum serviço selecionado.');
+
+  const est = ESTRUTURA.filter(([id]) => l.estrutura[id] && l.estrutura[id].status);
+  if (est.length || (l.obsLocal && l.obsLocal.trim())) {
+    secao('Levantamento do local');
+    if (est.length) tabela({
+      theme: 'grid', head: [['Item', 'Situação', 'Qtd', 'Observação']],
+      body: est.map(([id, nome]) => { const s = l.estrutura[id]; return [nome, SITUACAO[s.status], s.qtd ? String(s.qtd) : '', s.obs || '']; }),
+      columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 40, fontStyle: 'bold' }, 2: { halign: 'center', cellWidth: 12 } },
+      didParseCell: d => { if (d.section === 'body' && d.column.index === 1) { const k = Object.keys(SITUACAO).find(k => SITUACAO[k] === d.cell.raw); if (k) d.cell.styles.textColor = COR[k]; } }
+    });
+    if (l.obsLocal && l.obsLocal.trim()) { precisa(12); doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...NAVY); doc.text('Riscos e pontos de atenção', M, st.y); st.y += 5; paragrafo(l.obsLocal); }
+  }
+
+  const fotos = l.fotos.filter(f => f.data);
+  if (fotos.length) {
+    secao('Registro fotográfico');
+    const gap = 6, cw = (CW - gap) / 2, maxH = 64;
+    for (let i = 0; i < fotos.length; i += 2) {
+      const par = fotos.slice(i, i + 2).map((f, k) => {
+        const r = (f.w || 4) / (f.h || 3); let iw = cw, ih = iw / r; if (ih > maxH) { ih = maxH; iw = ih * r; }
+        doc.setFontSize(8.5);
+        return { f, iw, ih, leg: doc.splitTextToSize(`Foto ${i + k + 1}${f.legenda ? ' – ' + f.legenda : ''}`, cw) };
+      });
+      precisa(maxH + 6 + Math.max(...par.map(p => p.leg.length)) * 3.8);
+      par.forEach((p, k) => {
+        const x0 = M + k * (cw + gap);
+        doc.setFillColor(...LIGHT); doc.rect(x0, st.y, cw, maxH, 'F');
+        doc.addImage(p.f.data, 'JPEG', x0 + (cw - p.iw) / 2, st.y + (maxH - p.ih) / 2, p.iw, p.ih, undefined, 'FAST');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...GRAY); doc.text(p.leg, x0, st.y + maxH + 4);
+      });
+      st.y += maxH + 4 + Math.max(...par.map(p => p.leg.length)) * 3.8 + 4;
+    }
+    st.y += 2;
+  }
+
+  const o = l.orc;
+  secao('Condições da proposta');
+  const dias = num(o.validade) || 15;
+  tabela({ theme: 'grid', showHead: false, columnStyles: { 0: { fontStyle: 'bold', fillColor: LIGHT, cellWidth: 42 } },
+    body: [
+      ['Validade da proposta', `${dias} dias (até ${new Date(emissao.getTime() + dias * DIA).toLocaleDateString('pt-BR')})`],
+      o.inicio ? ['Início previsto', o.inicio] : null, o.pagamento ? ['Forma de pagamento', o.pagamento] : null, o.observacoes ? ['Observações', o.observacoes] : null
+    ].filter(Boolean) });
+
+  // assinaturas
+  const sig = l.assinatura;
+  precisa(sig ? 52 : 34); st.y += sig ? 30 : 16;
+  const sw = (CW - 20) / 2, xc = M + sw + 20;
+  if (sig) { try { doc.addImage(sig.data, 'PNG', xc + sw / 2 - 30, st.y - 26, 60, 20); } catch (x) {} }
+  doc.setDrawColor(...INK); doc.setLineWidth(0.3); doc.line(M, st.y, M + sw, st.y); doc.line(xc, st.y, W - M, st.y);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...INK);
+  doc.text(repNome || 'Representante', M + sw / 2, st.y + 4.5, { align: 'center' });
+  doc.text(sig ? sig.nome : (c.responsavel || 'Cliente'), xc + sw / 2, st.y + 4.5, { align: 'center' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...GRAY);
+  doc.text(e.nome || '', M + sw / 2, st.y + 8.5, { align: 'center' });
+  doc.text(c.nome || '', xc + sw / 2, st.y + 8.5, { align: 'center' });
+  if (sig) { doc.setFontSize(7); doc.text(`Assinado na tela em ${fmtMomento(sig.em)}${sig.gps ? ' · ' + textoGPS(sig.gps) : ''}`, xc + sw / 2, st.y + 12, { align: 'center' }); }
+  rodapePDF(doc, cf, l.numero);
+  return doc;
+}
+
+// =========================================================
+// 18. Contrato em PDF
+// =========================================================
+async function gerarContrato(l, jaPreenchido) {
+  if (!window.jspdf || !window.jspdf.jsPDF) { aviso('Sem conexão', 'O gerador de PDF não carregou. Conecte o aparelho à internet.'); return; }
+  const k = l.contrato;
+  if (!jaPreenchido || !k.doc) { const v = await formContrato(l, 'Dados do contrato'); if (!v) return; await gravar(l); }
+  try { const doc = montarContrato(l, cfg); await entregarPDF(doc, `Contrato_${l.numero.replace('ORC', 'CTR')}${l.cliente.nome ? '_' + slug(l.cliente.nome) : ''}.pdf`, 'Contrato ' + l.cliente.nome, false); }
+  catch (e) { console.error(e); aviso('Erro ao gerar o contrato', 'Confira os dados do contrato e tente de novo.'); }
+}
+function montarContrato(l, cf) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const { NAVY, INK, GRAY, LIGHT } = COR_PDF, W = 210, M = 14, CW = W - 2 * M;
+  const e = cf.empresa, c = l.cliente, k = l.contrato, t = totais(l);
+  const numero = l.numero.replace('ORC', 'CTR');
+  cabecalhoPDF(doc, cf, 'CONTRATO', numero, 'Assinatura ' + fmtData(k.assinatura || hojeISO()));
+  const st = { y: 44 }; const { precisa, secao, paragrafo, tabela } = ferramentasPDF(doc, st);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...NAVY);
+  doc.text('CONTRATO DE PRESTAÇÃO DE SERVIÇOS', W / 2, st.y, { align: 'center' }); st.y += 10;
+  const valor = valorFechado(l);
+  const subst = s => s.replace(/\{ENDERECO\}/g, k.endereco || c.endereco || '—').replace(/\{VALOR\}/g, brl(valor)).replace(/\{VALOR_EXTENSO\}/g, extenso(valor))
+    .replace(/\{VENCIMENTO\}/g, String(k.vencimento || 10)).replace(/\{MESES\}/g, String(k.meses || 12)).replace(/\{INICIO\}/g, fmtData(k.inicio) || '—')
+    .replace(/\{CIDADE\}/g, e.cidade || 'Goiânia - GO').replace(/\{CONTRATANTE\}/g, c.nome || '—').replace(/\{CONTRATADA\}/g, e.nome || '—');
+  secao('Das partes');
+  paragrafo(`CONTRATADA: ${e.nome || '—'}${e.cnpj ? ', inscrita no CNPJ sob o nº ' + e.cnpj : ''}${e.endereco ? ', com sede em ' + e.endereco : ''}${e.representante ? ', neste ato representada por ' + e.representante : ''}.`);
+  paragrafo(`CONTRATANTE: ${c.nome || '—'}${k.doc ? ', inscrito(a) no CPF/CNPJ sob o nº ' + k.doc : ''}${c.endereco ? ', com endereço em ' + c.endereco : ''}${k.repLegal ? ', neste ato representado(a) por ' + k.repLegal : ''}.`);
+  paragrafo('As partes acima identificadas têm entre si, justo e contratado, o presente Contrato de Prestação de Serviços, que se regerá pelas cláusulas e condições seguintes.');
+  secao('Cláusulas');
+  subst(cf.clausulas || CLAUSULAS_PADRAO).split(/\n\s*\n/).forEach(bloco => {
+    const ls = bloco.trim().split('\n'); if (!ls[0]) return;
+    if (/^CL[ÁA]USULA/i.test(ls[0])) { precisa(14); paragrafo(ls.shift(), 9.5, true); }
+    ls.forEach(x => x.trim() && paragrafo(x.trim()));
+  });
+  secao('Anexo I · Serviços contratados');
+  const its = t.its;
+  tabela({ theme: 'grid', head: [['Serviço', 'Qtd', 'Unidade', 'Cobrança']],
+    body: its.length ? its.map(i => [i.nome + (i.obs ? '\n' + i.obs : ''), String(i.qtd), i.unidade, i.tipo === 'mensal' ? 'Mensal' : 'Avulso']) : [[{ content: 'Conforme proposta ' + l.numero, colSpan: 4 }]],
+    columnStyles: { 1: { halign: 'center', cellWidth: 14 }, 2: { cellWidth: 28 }, 3: { cellWidth: 26 } } });
+  tabela({ theme: 'grid', showHead: false, columnStyles: { 0: { fontStyle: 'bold', fillColor: LIGHT, cellWidth: 60 } },
+    body: [['Valor mensal', `${brl(valor)} (${extenso(valor)})`], t.ta ? ['Serviços avulsos', brl(t.ta) + ' (pagamento único)'] : null,
+      ['Vencimento', `Todo dia ${k.vencimento || 10}`], ['Vigência', `${k.meses || 12} meses a partir de ${fmtData(k.inicio) || '—'}`], ['Proposta de origem', l.numero]].filter(Boolean) });
+  precisa(20); paragrafo(`E, por estarem assim justas e contratadas, as partes assinam o presente instrumento em duas vias de igual teor, na presença das testemunhas abaixo.`);
+  paragrafo(`${e.cidade || 'Goiânia - GO'}, ${dataExtenso(k.assinatura ? new Date(k.assinatura + 'T12:00:00') : new Date())}.`);
+  const sw = (CW - 20) / 2, xc = M + sw + 20;
+  const assin = (x, nome, sub) => { doc.setDrawColor(...INK); doc.setLineWidth(0.3); doc.line(x, st.y, x + sw, st.y); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...INK); doc.text(nome, x + sw / 2, st.y + 4.5, { align: 'center' }); doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...GRAY); doc.text(sub, x + sw / 2, st.y + 8.5, { align: 'center' }); };
+  precisa(34); st.y += 18;
+  assin(M, e.representante || e.nome || 'Contratada', 'CONTRATADA · ' + (e.nome || '')); assin(xc, k.repLegal || c.responsavel || c.nome || 'Contratante', 'CONTRATANTE · ' + (c.nome || ''));
+  precisa(30); st.y += 26;
+  assin(M, 'Testemunha 1', 'Nome e CPF'); assin(xc, 'Testemunha 2', 'Nome e CPF');
+  rodapePDF(doc, cf, numero);
+  return doc;
+}
+
+// =========================================================
+// 19. Início
+// =========================================================
+(async () => {
+  await DB.open();
+  try { const c = await DB.get('cfg'); if (c) cfg = c; } catch (e) {}
+  ajustarCfg();
+  try { reps = (await DB.get('reps')) || []; } catch (e) { reps = []; }
+  sessao = lerSessao();
+  if (sessao && sessao.papel === 'config') view = 'setup';
+  else if (sessao && (sessao.papel === 'gestor' || sessao.papel === 'rep')) {
+    try { levs = ((await DB.all()) || []).map(migrar); } catch (e) { levs = []; }
+    view = souGestor() ? 'painel' : 'inicio';
+  } else { sessao = null; view = 'login'; }
+  render();
+  sincronizar(true);
+  setInterval(() => sincronizar(true), 60000);
+  window.addEventListener('online', () => sincronizar(true));
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') sincronizar(true); });
+})();
+</script>
+</body>
+</html>
