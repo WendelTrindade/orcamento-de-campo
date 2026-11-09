@@ -328,6 +328,13 @@ const MESES_EXT = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', '
 // =========================================================
 // 2. Utilidades
 // =========================================================
+// Ao trocar o conteúdo de um elemento, ignora partes vazias (evita aparecer "null" na tela)
+(() => {
+  const limpa = k => k.flat(Infinity).filter(x => x != null && x !== false);
+  const rc = Element.prototype.replaceChildren, ap = Element.prototype.append;
+  Element.prototype.replaceChildren = function (...k) { return rc.apply(this, limpa(k)); };
+  Element.prototype.append = function (...k) { return ap.apply(this, limpa(k)); };
+})();
 function h(tag, props, ...kids) {
   const el = document.createElement(tag);
   if (props) for (const k in props) {
