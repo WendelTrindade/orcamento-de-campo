@@ -413,8 +413,8 @@ function carregarScript(url) {
 // 3. Firebase: login e banco de dados
 // =========================================================
 const FB = {
-  projeto: 'guardiao-c92e3',
-  chave: 'AIzaSyAvDp70k-I5kHRpW6XEY9qtVXhmtAV6wGY',
+  projeto: 'guardiao-orc',
+  chave: 'AIzaSyCgKVs9fDjjKQhabvZJTlwmAbPxuWyCuKA',
   base() { return `https://firestore.googleapis.com/v1/projects/${this.projeto}/databases/(default)/documents`; },
   async cab(corpo) {
     const hd = {}; if (corpo) hd['Content-Type'] = 'application/json';
