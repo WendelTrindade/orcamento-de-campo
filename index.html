@@ -175,6 +175,17 @@ div.tile{cursor:default}
 .chart text.v{fill:var(--ink);font-weight:600}
 .chart line{stroke:var(--line)}
 .gps{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.tams{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.tam{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2);min-height:54px;min-width:0}
+.tam.sel{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.tam label{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer;font-size:.93rem}
+.tam label input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.tam .tq{display:flex;align-items:center;gap:6px;flex:none}
+.tam .tq input{width:88px;padding:7px 8px;font-variant-numeric:tabular-nums}
+.tam .tq span{color:var(--muted);font-size:.82rem;min-width:18px}
+.tam .x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:1.15rem;line-height:1;padding:4px}
+.tam .x:hover{color:var(--bad)}
+.lista-cfg .row{justify-content:space-between;border-bottom:1px solid var(--line);padding-block:6px}
 
 .empty{text-align:center;padding:28px 16px;color:var(--muted);border:2px dashed var(--line);border-radius:var(--r);background:var(--surface)}
 .empty strong{display:block;font-family:var(--display);font-size:1.3rem;color:var(--ink);margin-bottom:4px}
@@ -315,6 +326,23 @@ const ESTRUTURA = [
   ['apoio',    'Banheiro / copa para funcionários', false],
   ['livro',    'Livro de ocorrências', false],
   ['muro',     'Muros / alambrados', false]
+];
+// Tamanho do local: itens para marcar com quantidade (o gestor pode mudar a lista em Minha empresa)
+const TAMANHOS_PADRAO = [
+  { id: 'casas', nome: 'Casas / unidades', un: '' },
+  { id: 'aptos', nome: 'Apartamentos', un: '' },
+  { id: 'blocos', nome: 'Blocos / torres', un: '' },
+  { id: 'andares', nome: 'Andares por bloco', un: '' },
+  { id: 'lotes', nome: 'Lotes / chácaras', un: '' },
+  { id: 'areaTotal', nome: 'Área total', un: 'm²' },
+  { id: 'areaConst', nome: 'Área construída', un: 'm²' },
+  { id: 'perimetro', nome: 'Perímetro / muro', un: 'm' },
+  { id: 'portVei', nome: 'Portões de veículos', un: '' },
+  { id: 'portPed', nome: 'Portões de pedestres', un: '' },
+  { id: 'portarias', nome: 'Portarias / guaritas', un: '' },
+  { id: 'vagas', nome: 'Vagas de estacionamento', un: '' },
+  { id: 'pessoas', nome: 'Moradores / pessoas (aprox.)', un: '' },
+  { id: 'funcs', nome: 'Funcionários no local', un: '' }
 ];
 const SITUACAO = { bom: 'Possui e funciona', reparo: 'Possui, precisa reparo', nao: 'Não possui' };
 const TIPOS_CLIENTE = ['Condomínio residencial', 'Condomínio de chácaras', 'Empresa / indústria', 'Comércio', 'Residência', 'Evento', 'Outro'];
@@ -542,7 +570,7 @@ const DB = {
 // =========================================================
 const CFG_PADRAO = () => ({
   empresa: { nome: 'Guardião Serviços de Qualidade', cnpj: '', telefone: '', email: '', endereco: '', cidade: 'Goiânia - GO', representante: '', logo: '', logoW: 1, logoH: 1 },
-  precos: {}, custos: JSON.parse(JSON.stringify(CUSTOS_PADRAO)), pacotes: [], clausulas: CLAUSULAS_PADRAO, gestorEmail: ''
+  precos: {}, custos: JSON.parse(JSON.stringify(CUSTOS_PADRAO)), pacotes: [], clausulas: CLAUSULAS_PADRAO, gestorEmail: '', tamanhos: JSON.parse(JSON.stringify(TAMANHOS_PADRAO))
 });
 let cfg = CFG_PADRAO();
 let reps = [];            // representantes (lista do gestor; o representante só tem o próprio)
@@ -563,6 +591,7 @@ function ajustarCfg() {
   cfg.custos.salarios = Object.assign({}, CUSTOS_PADRAO.salarios, cfg.custos.salarios || {});
   cfg.pacotes = cfg.pacotes || []; cfg.precos = cfg.precos || {};
   if (!cfg.clausulas) cfg.clausulas = CLAUSULAS_PADRAO;
+  if (!Array.isArray(cfg.tamanhos) || !cfg.tamanhos.length) cfg.tamanhos = JSON.parse(JSON.stringify(TAMANHOS_PADRAO));
 }
 const repsAtivos = () => reps.filter(r => r.ativo !== false).sort((a, b) => String(a.nome).localeCompare(String(b.nome)));
 const repPorId = id => reps.find(r => r.uid === id);
@@ -584,7 +613,19 @@ function migrar(l) {
   l.orc = Object.assign({ desconto: 0, validade: 15, pagamento: '', inicio: '', observacoes: '' }, l.orc || {});
   l.status = STATUS[l.status] ? l.status : 'levantamento';
   l.historico = l.historico || []; l.contrato = l.contrato || {}; l.agenda = l.agenda || ''; l.motivo = l.motivo || ''; l.repId = l.repId || '';
+  l.tamanho = l.tamanho || {};
   return l;
+}
+// itens de tamanho: os da lista padrão + os criados só neste levantamento (ou que saíram da lista padrão)
+function itensTamanho(l) {
+  const t = l.tamanho || {}, ids = new Set();
+  const out = cfg.tamanhos.map(d => { ids.add(d.id); const s = t[d.id] || {}; return { id: d.id, nome: d.nome, un: d.un || '', sel: !!s.sel, qtd: s.qtd ?? '', proprio: false }; });
+  Object.entries(t).forEach(([id, s]) => { if (!ids.has(id) && (s.extra || s.sel)) out.push({ id, nome: s.nome || id, un: s.un || '', sel: !!s.sel, qtd: s.qtd ?? '', proprio: !!s.extra }); });
+  return out;
+}
+const fmtQtd = v => (Number(v) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+function tamanhoTexto(l, sep = '  ·  ') {
+  return itensTamanho(l).filter(i => i.sel).map(i => `${i.nome}: ${i.qtd === '' || i.qtd == null ? '—' : fmtQtd(i.qtd)}${i.un ? ' ' + i.un : ''}`).join(sep);
 }
 function itensSelecionados(l) {
   const out = [];
@@ -861,7 +902,7 @@ async function entrar(email, senha) {
     }
     sessao = null;
     if (papel === 'inativo') return 'Seu acesso está desativado. Fale com o gestor.';
-    return 'Esta conta não tem acesso ao sistema. Se você é o gestor e está configurando agora, use "Primeiro acesso do gestor".';
+    return 'Esta conta não tem acesso ao sistema. Fale com o gestor.';
   } catch (e) { sessao = null; return e.status ? 'A nuvem recusou o acesso (' + e.status + '). Confira as regras do Firebase.' : msgAuth(e); }
 }
 async function forcarSaida(msg) {
@@ -909,13 +950,14 @@ function vLogin() {
     h('div', { class: 'head' }, h('div', null, h('h2', null, 'Entrar'), h('p', null, 'Gestor e representantes entram com o e-mail e a senha cadastrados.'))),
     h('div', { class: 'panel' },
       h('form', { class: 'grid', style: 'grid-template-columns:1fr', onsubmit: enviar }, campo('E-mail', email), campo('Senha', senha), erro,
-        h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: () => esqueciSenha(email.value) }, 'Esqueci minha senha')))),
-    h('div', { class: 'panel' }, h('h3', null, 'Primeiro acesso do gestor'),
-      h('p', null, 'Só uma vez, para ligar o sistema à nuvem da Guardião e criar a conta do gestor.'),
-      h('div', null, h('button', { class: 'btn navy', type: 'button', onclick: () => { view = 'setup'; render(); topo(); } }, 'Configurar o sistema')))
+        h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: () => esqueciSenha(email.value) }, 'Esqueci minha senha'))))
   ];
 }
 
+// A configuração inicial só abre pelo endereço terminado em #configurar (não aparece para os representantes)
+const pedeConfig = () => location.hash === '#configurar';
+function limparHash() { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} }
+function sairSetup() { sessao = null; gravarSessao(); limparHash(); view = 'login'; render(); topo(); }
 function vSetup() {
   // Etapa 1: criar a conta do gestor
   if (!sessao || sessao.papel !== 'config') {
@@ -946,7 +988,7 @@ function vSetup() {
           campo('E-mail do gestor', inp(v, 'email', { type: 'email', id: 'sEmail', autocomplete: 'username' })),
           campo('Senha (mínimo 6 caracteres)', inp(v, 'senha', { type: 'password', id: 'sSenha', autocomplete: 'new-password' })),
           campo('Repita a senha', inp(v, 'conf', { type: 'password', id: 'sConf', autocomplete: 'new-password' })),
-          erro, h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: () => { view = 'login'; render(); } }, 'Voltar'))))
+          erro, h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: sairSetup }, 'Voltar'))))
     ];
   }
   // Etapa 2: publicar as regras
@@ -961,7 +1003,7 @@ function vSetup() {
       const c = JSON.parse(JSON.stringify(cfg)); delete c.pendente;
       await FB.req('PATCH', 'orc_config/principal', { fields: { dados: { stringValue: JSON.stringify(c) }, atualizadoEm: { integerValue: String(cfg.atualizadoEm) } } });
       cfg.pendente = false; await DB.set('cfg', cfg);
-      sessao.papel = 'gestor'; gravarSessao(); view = 'reps'; render(); topo(); sincronizar(true);
+      sessao.papel = 'gestor'; gravarSessao(); limparHash(); view = 'reps'; render(); topo(); sincronizar(true);
       aviso('Sistema configurado', 'Agora cadastre os representantes. Cada um vai entrar com o próprio e-mail e senha e verá só os clientes dele.');
     } catch (e) {
       btn.disabled = false; btn.textContent = 'Já publiquei, concluir';
@@ -978,7 +1020,7 @@ function vSetup() {
         h('li', null, 'Não apague as regras do site. Cole o texto abaixo logo antes das duas últimas chaves ', h('b', null, '}'), ' ', h('b', null, '}'), '.'),
         h('li', null, 'Toque em ', h('b', null, 'Publicar'), ', volte aqui e toque em "Já publiquei, concluir".'))),
     h('div', { class: 'panel' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', null, 'Texto das regras'), h('button', { class: 'btn sm navy', type: 'button', onclick: () => copiar(regras, area) }, 'Copiar')), area, erro,
-      h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: () => { sessao = null; gravarSessao(); view = 'login'; render(); } }, 'Cancelar')))
+      h('div', { class: 'row' }, btn, h('button', { class: 'btn', type: 'button', onclick: sairSetup }, 'Cancelar')))
   ];
 }
 
@@ -1565,7 +1607,7 @@ async function exportarExcel() {
       const t = totais(l), v = validade(l), c = contratoInfo(l);
       return {
         'Número': l.numero, 'Cliente': l.cliente.nome, 'Tipo de local': l.cliente.tipo, 'Representante': nomeRep(l) || '—', 'Situação': STATUS[l.status],
-        'Data da visita': fmtData(l.cliente.dataVisita), 'Responsável': l.cliente.responsavel, 'Telefone': l.cliente.telefone, 'Endereço': l.cliente.endereco,
+        'Data da visita': fmtData(l.cliente.dataVisita), 'Responsável': l.cliente.responsavel, 'Telefone': l.cliente.telefone, 'Endereço': l.cliente.endereco, 'Tamanho do local': [tamanhoTexto(l, '; '), l.cliente.unidades].filter(Boolean).join('; '),
         'Valor mensal proposto': Math.round(t.tm * 100) / 100, 'Valor avulso proposto': Math.round(t.ta * 100) / 100, 'Desconto %': num(l.orc.desconto),
         'Emitido em': l.emitidoEm ? new Date(l.emitidoEm).toLocaleDateString('pt-BR') : '', 'Válido até': v ? v.venc.toLocaleDateString('pt-BR') : '',
         'Valor mensal fechado': l.status === 'fechado' ? valorFechado(l) : '', 'Assinatura do contrato': fmtData(l.contrato.assinatura), 'Início': fmtData(l.contrato.inicio),
@@ -1631,6 +1673,23 @@ function vEmpresa() {
     : [h('p', { class: 'nota' }, 'Nenhum pacote próprio ainda. Para criar, marque os serviços num levantamento e toque em "Salvar como pacote".')]));
   pintaPac();
 
+  // itens do tamanho do local
+  const tamBox = h('div', { class: 'cat lista-cfg' });
+  const pintaTam = () => tamBox.replaceChildren(...cfg.tamanhos.map((d, i) => h('div', { class: 'row' },
+    h('span', null, h('b', null, d.nome), d.un ? h('span', { style: 'color:var(--muted);font-size:.85rem' }, ' · em ' + d.un) : null),
+    h('div', { class: 'row' },
+      i > 0 ? h('button', { class: 'btn sm', type: 'button', 'aria-label': 'Subir ' + d.nome, onclick: () => { [cfg.tamanhos[i - 1], cfg.tamanhos[i]] = [cfg.tamanhos[i], cfg.tamanhos[i - 1]]; sv(); pintaTam(); } }, '↑') : null,
+      h('button', { class: 'btn sm', type: 'button', onclick: async () => {
+        const v = await formModal('Editar item', null, [{ k: 'nome', rot: 'Nome', val: d.nome, req: true }, { k: 'un', rot: 'Medida (opcional)', val: d.un || '' }], 'Salvar');
+        if (!v) return; d.nome = v.nome.trim(); d.un = v.un.trim(); sv(); pintaTam();
+      } }, 'Editar'),
+      h('button', { class: 'btn sm danger', type: 'button', onclick: async () => {
+        if (!await confirma('Apagar este item da lista?', d.nome + '\nOs levantamentos em que ele já foi marcado continuam com a informação.', 'Apagar', 'danger')) return;
+        cfg.tamanhos.splice(i, 1); sv(); pintaTam();
+      } }, 'Apagar')))));
+  pintaTam();
+  const novoTam = { nome: '', un: '' };
+
   const clausulas = h('textarea', { id: 'clausulas', style: 'min-height:320px' }); clausulas.value = cfg.clausulas;
   clausulas.addEventListener('input', () => { cfg.clausulas = clausulas.value; sv(); });
   const regras = regrasFirebase(cfg.gestorEmail || sessao.email);
@@ -1670,6 +1729,18 @@ function vEmpresa() {
     h('div', { class: 'panel' }, h('h3', null, 'Tabela de preços'),
       h('p', null, 'Valor padrão de cada serviço. Ele já vem preenchido quando o serviço é marcado num levantamento, e pode ser mudado caso a caso.'), precos),
     h('div', { class: 'panel' }, h('h3', null, 'Pacotes próprios'), pacBox),
+    h('div', { class: 'panel' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', null, 'Itens do tamanho do local'),
+        h('button', { class: 'btn sm', type: 'button', onclick: async () => { if (await confirma('Voltar à lista original?', 'Os itens que você criou ou mudou saem da lista padrão. Os levantamentos já feitos não mudam.', 'Voltar')) { cfg.tamanhos = JSON.parse(JSON.stringify(TAMANHOS_PADRAO)); await salvarCfg(); render(); } } }, 'Restaurar lista')),
+      h('p', null, 'É a lista que o representante marca em "Tamanho do local". Ele também pode criar itens na hora, só para aquele levantamento.'),
+      tamBox,
+      h('div', { class: 'grid', style: 'align-items:end' },
+        campo('Novo item', inp(novoTam, 'nome', { id: 'cfgTamNome', placeholder: 'Ex.: Elevadores' })),
+        campo('Medida (opcional)', inp(novoTam, 'un', { id: 'cfgTamUn', placeholder: 'm², m…' })),
+        h('div', null, h('button', { class: 'btn navy', type: 'button', onclick: () => {
+          const n = novoTam.nome.trim(); if (!n) { aviso('Falta o nome', 'Escreva o nome do item.'); return; }
+          if (cfg.tamanhos.some(d => d.nome.toLowerCase() === n.toLowerCase())) { aviso('Item já existe', `"${n}" já está na lista.`); return; }
+          cfg.tamanhos.push({ id: 't_' + uid(), nome: n, un: novoTam.un.trim() }); sv(); render(); toast('Item adicionado à lista');
+        } }, 'Adicionar à lista')))),
     h('div', { class: 'panel' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('h3', null, 'Cláusulas do contrato'),
         h('button', { class: 'btn sm', type: 'button', onclick: async () => { if (await confirma('Voltar ao modelo original?', 'O texto que você editou será substituído.', 'Voltar')) { cfg.clausulas = CLAUSULAS_PADRAO; await salvarCfg(); render(); } } }, 'Restaurar modelo')),
       h('p', null, 'Modelo de referência. Revise com seu advogado antes de usar. Cada cláusula começa com "CLÁUSULA" numa linha própria e fica separada por uma linha em branco. Palavras entre chaves são preenchidas sozinhas: {ENDERECO}, {VALOR}, {VALOR_EXTENSO}, {VENCIMENTO}, {MESES}, {INICIO}, {CIDADE}, {CONTRATANTE}, {CONTRATADA}.'),
@@ -1707,11 +1778,60 @@ function vCliente() {
       campo('Responsável (síndico, gerente, proprietário)', inp(c, 'responsavel', { id: 'cResp' }, sv)),
       campo('Telefone / WhatsApp', inp(c, 'telefone', { id: 'cTel', type: 'tel' }, sv)),
       campo('E-mail', inp(c, 'email', { id: 'cMail', type: 'email' }, sv)),
-      campo('Tamanho do local (unidades, área, nº de portões)', inp(c, 'unidades', { id: 'cUn', placeholder: 'Ex.: 120 casas, 2 portarias' }, sv)),
       campo('Endereço completo', inp(c, 'endereco', { id: 'cEnd' }, sv), 'full'),
       campo('O que o cliente relatou', txt(c, 'observacoes', { id: 'cObs', placeholder: 'Problemas, furtos recentes, horários críticos, expectativas…' }, sv), 'full'))),
+    painelTamanho(),
     h('div', { class: 'panel' }, h('h3', null, 'Localização da visita'), h('p', null, 'Registra onde o levantamento foi feito. Sai no PDF e no painel do gestor.'), gpsBox)
   ];
+}
+function painelTamanho() {
+  const t = lev.tamanho, c = lev.cliente;
+  const grade = h('div', { class: 'tams' });
+  const resumo = h('p', { class: 'nota', id: 'tamResumo' });
+  const pintaResumo = () => { const n = itensTamanho(lev).filter(i => i.sel).length; resumo.textContent = n ? `${n} item(ns) marcado(s). Saem no PDF em "Tamanho do local".` : 'Marque o que existe no local e informe a quantidade.'; };
+  const cartao = i => {
+    const cb = h('input', { type: 'checkbox', id: 'tm_' + i.id, checked: i.sel });
+    const q = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', id: 'tq_' + i.id, value: i.qtd, placeholder: '0', 'aria-label': 'Quantidade de ' + i.nome });
+    const qBox = h('div', { class: 'tq', hidden: !i.sel }, q, h('span', null, i.un));
+    const card = h('div', { class: 'tam' + (i.sel ? ' sel' : '') }, h('label', { for: 'tm_' + i.id }, cb, h('span', null, i.nome)), qBox,
+      i.proprio ? h('button', { class: 'x', type: 'button', title: 'Remover item', 'aria-label': 'Remover ' + i.nome, onclick: async () => {
+        if (!await confirma('Remover este item?', i.nome, 'Remover', 'danger')) return;
+        delete t[i.id]; salvar(); pinta();
+      } }, '×') : null);
+    const reg = () => (t[i.id] = Object.assign(t[i.id] || {}, { nome: i.nome, un: i.un }, i.proprio ? { extra: true } : {}));
+    cb.addEventListener('change', () => {
+      reg().sel = cb.checked; card.classList.toggle('sel', cb.checked); qBox.hidden = !cb.checked;
+      if (cb.checked) setTimeout(() => q.focus(), 0);
+      salvar(); pintaResumo();
+    });
+    q.addEventListener('input', () => { reg().qtd = q.value === '' ? '' : num(q.value); salvar(); });
+    return card;
+  };
+  const pinta = () => { grade.replaceChildren(...itensTamanho(lev).map(cartao)); pintaResumo(); };
+  pinta();
+
+  // criar item novo
+  const nv = { nome: '', un: '' };
+  const nome = inp(nv, 'nome', { id: 'tmNome', placeholder: 'Ex.: Piscinas, Elevadores, Salões de festa' });
+  const un = inp(nv, 'un', { id: 'tmUn', placeholder: 'Opcional: m², m, kg…' });
+  const padrao = h('input', { type: 'checkbox', id: 'tmPadrao', checked: true, style: 'width:18px;height:18px;accent-color:var(--accent)' });
+  const criar = async () => {
+    const n = nv.nome.trim();
+    if (!n) { aviso('Falta o nome', 'Escreva o nome do item, por exemplo "Elevadores".'); return; }
+    if (itensTamanho(lev).some(i => i.nome.toLowerCase() === n.toLowerCase())) { aviso('Item já existe', `"${n}" já está na lista. É só marcar.`); return; }
+    const id = 't_' + uid(), novo = { id, nome: n, un: nv.un.trim() };
+    if (souGestor() && padrao.checked) { cfg.tamanhos.push(novo); await salvarCfg(); }
+    t[id] = Object.assign({ nome: novo.nome, un: novo.un, sel: true, qtd: '' }, souGestor() && padrao.checked ? {} : { extra: true });
+    salvar(true); nv.nome = ''; nv.un = ''; nome.value = ''; un.value = ''; pinta();
+    const q = document.getElementById('tq_' + id); if (q) q.focus();
+    toast('Item adicionado');
+  };
+  return h('div', { class: 'panel' }, h('h3', null, 'Tamanho do local'), resumo, grade,
+    h('div', { class: 'grid', style: 'align-items:end' },
+      campo('Criar outro item', nome), campo('Medida', un),
+      h('div', null, h('button', { class: 'btn navy', type: 'button', onclick: criar }, 'Adicionar item'))),
+    souGestor() ? h('label', { for: 'tmPadrao', class: 'row', style: 'font-size:.9rem;color:var(--muted);cursor:pointer' }, padrao, 'Guardar na lista padrão, para aparecer em todos os levantamentos') : null,
+    campo('Observação sobre o tamanho', inp(c, 'unidades', { id: 'cUn', placeholder: 'Ex.: 2 entradas usadas só em dia de evento' }, () => salvar())));
 }
 
 function abrirCalculadora(def, aoUsar) {
@@ -2073,7 +2193,7 @@ function montarPDF(l, cf) {
       ['Responsável', c.responsavel || '—', 'Telefone', c.telefone || '—'],
       ['E-mail', c.email || '—', 'Representante', repNome || '—'],
       ['Endereço', { content: c.endereco || '—', colSpan: 3 }],
-      c.unidades ? ['Tamanho do local', { content: c.unidades, colSpan: 3 }] : null,
+      (tamanhoTexto(l) || c.unidades) ? ['Tamanho do local', { content: [tamanhoTexto(l, '\n'), c.unidades].filter(Boolean).join('\n'), colSpan: 3 }] : null,
       l.gps ? ['Local da visita', { content: `${textoGPS(l.gps)} · registrado em ${fmtMomento(l.gps.em)}`, colSpan: 3 }] : null
     ].filter(Boolean)
   });
@@ -2231,7 +2351,8 @@ function montarContrato(l, cf) {
   else if (sessao && (sessao.papel === 'gestor' || sessao.papel === 'rep')) {
     try { levs = ((await DB.all()) || []).map(migrar); } catch (e) { levs = []; }
     view = souGestor() ? 'painel' : 'inicio';
-  } else { sessao = null; view = 'login'; }
+  } else { sessao = null; view = pedeConfig() ? 'setup' : 'login'; }
+  window.addEventListener('hashchange', () => { if (pedeConfig() && !sessao) { view = 'setup'; render(); topo(); } });
   render();
   sincronizar(true);
   setInterval(() => sincronizar(true), 60000);
